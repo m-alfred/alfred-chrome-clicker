@@ -33,9 +33,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if (pickBtn) {
     pickBtn.addEventListener('click', () => {
       console.log('[popup] 点击屏幕选点按钮');
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         console.log('[popup] 发送pick_point消息到tab:', tabs[0].id);
-        chrome.tabs.sendMessage(tabs[0].id, {action: 'pick_point'});
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'pick_point' });
+      });
+    });
+  }
+
+  // 定时点击按钮
+  const startTimerBtn = document.getElementById('start-timer-click');
+  if (startTimerBtn) {
+    startTimerBtn.addEventListener('click', () => {
+      const x = parseInt(xInput.value, 10) || 0;
+      const y = parseInt(yInput.value, 10) || 0;
+      const interval = parseInt(document.getElementById('interval').value, 10) || 1000;
+      const count = parseInt(document.getElementById('count').value, 10) || 10;
+      console.log('[popup] 开始定时点击:', { x, y, interval, count });
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'timer_click',
+          x, y, interval, count
+        });
       });
     });
   }
@@ -43,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 监听content.js返回的坐标
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     console.log('[popup] 收到消息:', msg);
-    if(msg.action === 'picked_point') {
+    if (msg.action === 'picked_point') {
       console.log('[popup] 收到picked_point坐标:', msg.x, msg.y);
       xInput.value = msg.x;
       yInput.value = msg.y;

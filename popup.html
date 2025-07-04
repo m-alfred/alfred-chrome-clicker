@@ -18,6 +18,14 @@
   <input type="number" id="y" min="0" />
   <button id="save">保存</button>
   <button id="pick">屏幕选点</button>
+
+  <hr/>
+  <label for="interval">点击间隔（毫秒）：</label>
+  <input type="number" id="interval" min="100" value="1000" />
+  <label for="count">点击次数：</label>
+  <input type="number" id="count" min="1" value="10" />
+  <button id="start-timer-click">开始定时点击</button>
+
   <div id="status" style="color:green;"></div>
   <script src="popup.js"></script>
 </body>

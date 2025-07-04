@@ -58,5 +58,25 @@
       console.log('[content] 激活选点模式');
       enablePickPointMode();
     }
+    if (msg.action === 'timer_click') {
+      console.log('[content] 收到timer_click:', msg);
+      startTimerClick(msg.x, msg.y, msg.interval, msg.count);
+    }
   });
+
+  // 定时多次点击
+  function startTimerClick(x, y, interval, count) {
+    let i = 0;
+    function doClick() {
+      if (i >= count) {
+        console.log('[content] 定时点击完成');
+        return;
+      }
+      console.log(`[content] timer_click 第${i+1}次: (${x},${y})`);
+      simulateClick(x, y);
+      i++;
+      setTimeout(doClick, interval);
+    }
+    doClick();
+  }
 })();
