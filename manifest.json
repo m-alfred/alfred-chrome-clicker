@@ -3,23 +3,32 @@
   "name": "自动点击器 Auto Clicker",
   "version": "1.0",
   "description": "自动点击屏幕指定坐标，可自定义位置。",
-  "permissions": ["storage", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
+      "16": "icons/favicon-16x16.png",
+      "48": "icons/favicon.ico",
+      "192": "icons/favicon-192x192.png"
     }
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ]
 }
