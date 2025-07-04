@@ -43,7 +43,9 @@
       const x = e.clientX;
       const y = e.clientY;
       console.log('[content] 选点点击，坐标:', x, y);
-      chrome.runtime.sendMessage({ action: 'picked_point', x, y });
+      chrome.runtime.sendMessage({ action: 'picked_point', x, y }, (res) => {
+        console.log('[content] picked_point已发送至background，返回：', res);
+      });
       mask.remove();
       window.removeEventListener('click', onClick, true);
     }

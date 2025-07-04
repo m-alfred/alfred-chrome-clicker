@@ -3,10 +3,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const yInput = document.getElementById('y');
   const status = document.getElementById('status');
   // 读取已保存的坐标
-  chrome.storage.sync.get(['clickX', 'clickY'], (data) => {
-    console.log('[popup] 读取已保存的坐标:', data);
-    if (data.clickX !== undefined) xInput.value = data.clickX;
-    if (data.clickY !== undefined) yInput.value = data.clickY;
+  // 向background请求最新选点坐标
+  chrome.runtime.sendMessage({ action: 'get_last_point' }, (res) => {
+    console.log('[popup] background返回lastPickedPoint:', res);
+    if (res && typeof res.x === 'number' && typeof res.y === 'number') {
+      xInput.value = res.x;
+      yInput.value = res.y;
+    } else {
+      // fallback: 读取storage
+      chrome.storage.sync.get(['clickX', 'clickY'], (data) => {
+        console.log('[popup] 读取已保存的坐标:', data);
+        if (data.clickX !== undefined) xInput.value = data.clickX;
+        if (data.clickY !== undefined) yInput.value = data.clickY;
+      });
+    }
   });
   document.getElementById('save').addEventListener('click', () => {
     const x = parseInt(xInput.value, 10) || 0;
