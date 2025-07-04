@@ -1,5 +1,5 @@
 // 自动点击器 content.js
-(function() {
+(function () {
   function simulateClick(x, y) {
     const el = document.elementFromPoint(x, y);
     if (!el) return;
@@ -13,13 +13,18 @@
   }
   // 自动点击
   chrome.storage.sync.get(['clickX', 'clickY'], ({ clickX, clickY }) => {
+    console.log('[content] 读取到已保存坐标:', clickX, clickY);
     if (typeof clickX === 'number' && typeof clickY === 'number') {
-      setTimeout(() => simulateClick(clickX, clickY), 800); // 页面加载后延迟点击
+      setTimeout(() => {
+        console.log('[content] 延迟触发自动点击:', clickX, clickY);
+        simulateClick(clickX, clickY);
+      }, 800); // 页面加载后延迟点击
     }
   });
 
   // 选点模式
   function enablePickPointMode() {
+    console.log('[content] 进入enablePickPointMode');
     // 创建遮罩
     const mask = document.createElement('div');
     mask.style.position = 'fixed';
@@ -37,7 +42,8 @@
       e.stopPropagation();
       const x = e.clientX;
       const y = e.clientY;
-      chrome.runtime.sendMessage({action: 'picked_point', x, y});
+      console.log('[content] 选点点击，坐标:', x, y);
+      chrome.runtime.sendMessage({ action: 'picked_point', x, y });
       mask.remove();
       window.removeEventListener('click', onClick, true);
     }
@@ -45,7 +51,9 @@
   }
   // 监听popup发来的选点请求
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    console.log('[content] 收到消息:', msg);
     if (msg.action === 'pick_point') {
+      console.log('[content] 激活选点模式');
       enablePickPointMode();
     }
   });
