@@ -8,6 +8,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     console.log('[background] 缓存picked_point:', lastPickedPoint);
     // 可选：也写入storage
     chrome.storage.sync.set({ clickX: msg.x, clickY: msg.y });
+    // 自动打开popup
+    if (chrome.action && chrome.action.openPopup) {
+      chrome.action.openPopup();
+    } else {
+      console.warn('[background] chrome.action.openPopup 不支持');
+    }
     sendResponse && sendResponse({ status: 'ok' });
     return true;
   }
