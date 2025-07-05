@@ -73,4 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
+
+  // 注入脚本按钮
+  const injectBtn = document.getElementById('inject-script');
+  if (injectBtn) {
+    injectBtn.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: function() {
+            const oldLog = console.log;
+            console.log = function(...args) {
+              oldLog.call(console, '[已注入]', ...args);
+            };
+          }
+        });
+      });
+    });
+  }
 });
