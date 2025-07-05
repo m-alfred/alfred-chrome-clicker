@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[popup] 发送pick_point消息到tab:', tabs[0].id);
         chrome.tabs.sendMessage(tabs[0].id, { action: 'pick_point' });
       });
+      // 自动关闭popup窗口，提升用户体验
+      window.close();
     });
   }
 
