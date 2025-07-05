@@ -12,15 +12,15 @@
     el.dispatchEvent(new MouseEvent('click', evtOpts));
   }
   // 自动点击
-  chrome.storage.sync.get(['clickX', 'clickY'], ({ clickX, clickY }) => {
-    console.log('[content] 读取到已保存坐标:', clickX, clickY);
-    if (typeof clickX === 'number' && typeof clickY === 'number') {
-      setTimeout(() => {
-        console.log('[content] 延迟触发自动点击:', clickX, clickY);
-        simulateClick(clickX, clickY);
-      }, 800); // 页面加载后延迟点击
-    }
-  });
+  // chrome.storage.sync.get(['clickX', 'clickY'], ({ clickX, clickY }) => {
+  //   console.log('[content] 读取到已保存坐标:', clickX, clickY);
+  //   if (typeof clickX === 'number' && typeof clickY === 'number') {
+  //     setTimeout(() => {
+  //       console.log('[content] 延迟触发自动点击:', clickX, clickY);
+  //       simulateClick(clickX, clickY);
+  //     }, 800); // 页面加载后延迟点击
+  //   }
+  // });
 
   // 选点模式
   function enablePickPointMode() {
@@ -65,17 +65,26 @@
   });
 
   // 定时多次点击
+  // 防止重复定时点击
+  let timerClickTimerId = null;
   function startTimerClick(x, y, interval, count) {
+    // 如果已有任务，先取消
+    if (timerClickTimerId) {
+      clearTimeout(timerClickTimerId);
+      timerClickTimerId = null;
+      console.log('[content] 已有定时点击任务，已中断旧任务');
+    }
     let i = 0;
     function doClick() {
       if (i >= count) {
         console.log('[content] 定时点击完成');
+        timerClickTimerId = null;
         return;
       }
-      console.log(`[content] timer_click 第${i+1}次: (${x},${y})`);
+      console.log(`[content] timer_click 第${i + 1}次: (${x},${y})`);
       simulateClick(x, y);
       i++;
-      setTimeout(doClick, interval);
+      timerClickTimerId = setTimeout(doClick, interval);
     }
     doClick();
   }
