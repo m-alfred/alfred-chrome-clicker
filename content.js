@@ -1,115 +1,64 @@
 // 自动点击器 content.js
+// 脚本注入方法参考：https://stackoverflow.com/questions/9515704/access-variables-and-functions-defined-in-page-context-from-an-extension/9517879#9517879
 (function () {
-  // 通用console劫持方法，可被内容脚本和注入脚本共用
-  function injectConsoleHijack() {
-    console.log('console.clear 已被覆盖');
+  console.log('content.js 已加载');
 
-    document.body.style.backgroundColor = 'red';
+  console.log('当前页面url:', location.href);
+  console.log('是否顶层:', window.top === window.self ? '是' : '否');
 
-    window.changeColor = function () {
-      document.body.style.backgroundColor = 'blue';
+  function injectJs(src) {
+    console.log('injectJs 执行');
+    const jsPath = src || 'inject.js';
+    const tempScript = document.createElement('script');
+    console.log('injectJs src:', chrome.runtime.getURL(jsPath));
+    tempScript.src = chrome.runtime.getURL(jsPath);
+    tempScript.onload = () => {
+      console.log('injectJs 加载完成, 移除');
+      // tempScript.remove();
     };
-    try {
-      Object.defineProperty(console, 'clear', {
-        value: function () {
-          console.log('页面清空控制台');
-        },
-        configurable: true
-      });
-      Object.defineProperty(console, 'warn', {
-        value: function () {
-          console.log('页面警告');
-        },
-        configurable: true
-      });
-      console.log('console.clear/console.warn 已自动被劫持');
-    } catch (e) {
-      console.log('console 劫持失败', e);
-    }
+    (document.head || document.documentElement).appendChild(tempScript);
   }
+  // 注入js
+  injectJs('inject.js');
 
-  // 页面加载自动注入
-  injectConsoleHijack();
-
-  function simulateClick(x, y) {
-    const el = document.elementFromPoint(x, y);
-    if (!el) {
-      console.log('[simulateClick] 没找到元素');
-      return;
-    }
-    const rect = el.getBoundingClientRect();
-    const clientX = rect.left + Math.min(x - rect.left, rect.width - 1);
-    const clientY = rect.top + Math.min(y - rect.top, rect.height - 1);
-    const evtOpts = { bubbles: true, cancelable: true, view: window, clientX, clientY };
-
-    // 调试日志
-    console.log('[simulateClick] 目标元素:', el);
-    console.log('[simulateClick] 输入坐标:', x, y);
-    console.log('[simulateClick] rect:', rect);
-    console.log('[simulateClick] 事件clientX,clientY:', clientX, clientY);
-
-    // Mouse事件
-    el.dispatchEvent(new MouseEvent('mousedown', evtOpts));
-    el.dispatchEvent(new MouseEvent('mouseup', evtOpts));
-    el.dispatchEvent(new MouseEvent('click', evtOpts));
-
-    // Pointer事件
-    try {
-      el.dispatchEvent(new PointerEvent('pointerdown', evtOpts));
-      el.dispatchEvent(new PointerEvent('pointerup', evtOpts));
-      el.dispatchEvent(new PointerEvent('pointermove', evtOpts));
-      el.dispatchEvent(new PointerEvent('click', evtOpts));
-    } catch (e) { }
-
-    // Touch事件（如环境支持）
-    try {
-      if (window.Touch && window.TouchEvent) {
-        const touchObj = new Touch({
-          identifier: Date.now(),
-          target: el,
-          clientX, clientY, pageX: clientX, pageY: clientY, screenX: clientX, screenY: clientY
-        });
-        const touchEventInit = {
-          bubbles: true,
-          cancelable: true,
-          touches: [touchObj],
-          targetTouches: [],
-          changedTouches: [touchObj]
-        };
-        el.dispatchEvent(new TouchEvent('touchstart', touchEventInit));
-        el.dispatchEvent(new TouchEvent('touchend', touchEventInit));
+  // 只在iframe内部页面执行自动点击canvas逻辑
+  console.log('[content] window.self !== window.top:', window.self !== window.top, window.self, window.top);
+  if (window.self !== window.top) {
+    function simulateRealPointerClick(x, y) {
+      const canvas = document.querySelector('canvas');
+      console.log('[iframe simulateRealPointerClick] canvas:', canvas);
+      if (!canvas) {
+        console.log('[iframe simulateRealPointerClick] 没找到canvas');
+        return;
       }
-    } catch (e) { }
-  }
-
-  // 自动为所有canvas元素绑定调试事件监听
-  function bindCanvasDebugListeners() {
-    const events = [
-      'mousedown', 'mouseup', 'click',
-      'pointerdown', 'pointerup', 'pointermove',
-      'touchstart', 'touchend'
-    ];
-    document.querySelectorAll('canvas').forEach(canvas => {
-      events.forEach(evt => {
-        canvas.addEventListener(evt, function (e) {
-          console.log(`[canvas调试] 事件:${evt}, clientX:${e.clientX}, clientY:${e.clientY}, offsetX:${e.offsetX}, offsetY:${e.offsetY}, isTrusted:${e.isTrusted}`);
-        });
+      const rect = canvas.getBoundingClientRect();
+      const clientX = rect.left + x;
+      const clientY = rect.top + y;
+      const eventOpts = {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        clientX,
+        clientY,
+        screenX: window.screenX + clientX,
+        screenY: window.screenY + clientY,
+        pageX: window.scrollX + clientX,
+        pageY: window.scrollY + clientY,
+        pointerId: 1,
+        pointerType: 'mouse',
+        isPrimary: true,
+        button: 0
+      };
+      ['pointerdown', 'mousedown', 'mouseup', 'pointerup', 'click'].forEach(type => {
+        const evt = new PointerEvent(type, eventOpts);
+        canvas.dispatchEvent(evt);
       });
-    });
-  }
-  // 页面加载时自动绑定canvas调试监听
-  bindCanvasDebugListeners();
+    }
 
-  // 自动点击
-  // chrome.storage.sync.get(['clickX', 'clickY'], ({ clickX, clickY }) => {
-  //   console.log('[content] 读取到已保存坐标:', clickX, clickY);
-  //   if (typeof clickX === 'number' && typeof clickY === 'number') {
-  //     setTimeout(() => {
-  //       console.log('[content] 延迟触发自动点击:', clickX, clickY);
-  //       simulateClick(clickX, clickY);
-  //     }, 800); // 页面加载后延迟点击
-  //   }
-  // });
+    // 也可暴露到window供popup调用
+    window.simulateRealPointerClick = simulateRealPointerClick;
+    console.log('[content] simulateRealPointerClick 已暴露到window');
+  }
 
   // 选点模式
   function enablePickPointMode() {
@@ -171,7 +120,7 @@
         return;
       }
       console.log(`[content] timer_click 第${i + 1}次: (${x},${y})`);
-      simulateClick(x, y);
+      simulateRealPointerClick(x, y);
       i++;
       timerClickTimerId = setTimeout(doClick, interval);
     }

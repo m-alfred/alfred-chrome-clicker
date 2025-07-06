@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>测试iframe点击</title>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+
+    #counter {
+      font-size: 2em;
+      margin: 20px;
+    }
+
+    #btn {
+      font-size: 1.5em;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="counter">0</div>
+  <button id="btn">iframe按钮</button>
+  <br>
+  <canvas id="test-canvas" width="600" height="400" style="border:1px solid #aaa;"></canvas>
+  <script>
+    let count = 0;
+    const counter = document.getElementById('counter');
+    document.getElementById('btn').addEventListener('click', function () {
+      count++;
+      counter.textContent = count;
+      console.warn('iframe click!');
+    });
+    // canvas点击画红点
+    const canvas = document.getElementById('test-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.addEventListener('click', function (e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = 'red';
+      ctx.fill();
+    });
+  </script>
+</body>
+
+</html>

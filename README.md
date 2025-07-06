@@ -31,3 +31,43 @@ alfred-chrome-cliker/
 ```
 
 如需进一步定制功能，请根据实际需求修改 `content.js` 或 `popup.js`。
+
+## 脚本注入
+
+
+## 开发中遇到的问题
+### GET chrome-extension://invalid/ net::ERR_FAILED
+在manifest.json中添加
+```
+"web_accessible_resources": [{
+  "resources": ["inject.js"],
+  "matches": ["<all_urls>"]
+}]
+```
+
+### content-script 无法劫持网页js方法
+内容脚本位于隔离的环境中，因此内容脚本可以更改其 JavaScript 环境，而不会与网页或其他扩展程序的内容脚本冲突。内容脚本的执行环境与托管它们的网页彼此隔离，但它们共享对网页 DOM 的访问权限。
+使用`chrome.scripting.executeScript`注入脚本
+```
+chrome.scripting.executeScript({
+    target: { tabId: tabs[0].id },
+    files: ['inject.js']
+  }).then((results) => {
+    console.log('脚本注入并执行成功:', results);
+  }).catch((err) => {
+    console.error('脚本注入失败:', err);
+  });
+```
+
+### iframe中注入代码失败
+设置`all_frames`为`true`，all_frames指定是否应将 JavaScript 和 CSS 文件注入与指定网址要求匹配的所有框架，还是仅注入标签页中的顶层框架
+```
+"content_scripts": [
+  {
+    "matches": ["https://*.nytimes.com/*"],
+    "all_frames": true,
+    "js": ["contentScript.js"]
+  }
+],
+```
+
