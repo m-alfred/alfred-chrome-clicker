@@ -4,8 +4,12 @@
   "version": "1.0",
   "description": "自动点击屏幕指定坐标，可自定义位置。",
   "permissions": [
+    "activeTab",
+    "scripting",
     "storage",
-    "scripting"
+    "tabs",
+    "cookies",
+    "windows"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -28,7 +32,8 @@
       ],
       "js": [
         "content.js"
-      ]
+      ],
+      "run_at": "document_start"
     }
   ]
 }

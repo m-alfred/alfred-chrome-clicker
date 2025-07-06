@@ -1,3 +1,31 @@
+// 通用console劫持方法，可被内容脚本和注入脚本共用
+function injectConsoleHijack() {
+  console.log('console.clear 已被覆盖');
+
+  document.body.style.backgroundColor = 'red';
+
+  window.changeColor = function () {
+    document.body.style.backgroundColor = 'blue';
+  };
+  try {
+    Object.defineProperty(console, 'clear', {
+      value: function () {
+        console.log('页面清空控制台');
+      },
+      configurable: true
+    });
+    Object.defineProperty(console, 'warn', {
+      value: function () {
+        console.log('页面警告');
+      },
+      configurable: true
+    });
+    console.log('console.clear/console.warn 已自动被劫持');
+  } catch (e) {
+    console.log('console 劫持失败', e);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const xInput = document.getElementById('x');
   const yInput = document.getElementById('y');
@@ -81,12 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         chrome.scripting.executeScript({
           target: { tabId: tabs[0].id },
-          func: function() {
-            const oldLog = console.log;
-            console.log = function(...args) {
-              oldLog.call(console, '[已注入]', ...args);
-            };
+          func: function () {
+            injectConsoleHijack();
           }
+        }).then((results) => {
+          console.log('脚本注入并执行成功:', results);
+        }).catch((err) => {
+          console.error('脚本注入失败:', err);
         });
       });
     });

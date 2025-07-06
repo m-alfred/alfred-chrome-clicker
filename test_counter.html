@@ -1,24 +1,44 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <title>点击计数器测试页</title>
   <style>
-    body { font-family: Arial; margin: 40px; }
-    #counter { font-size: 2em; margin-bottom: 20px; }
-    #btn { font-size: 1.5em; padding: 10px 30px; }
+    body {
+      font-family: Arial;
+      margin: 40px;
+    }
+
+    #counter {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    #btn {
+      font-size: 1.5em;
+      padding: 10px 30px;
+    }
   </style>
 </head>
+
 <body>
   <div id="counter">0</div>
   <button id="btn">点击我</button>
   <script>
     let count = 0;
     const counter = document.getElementById('counter');
-    document.getElementById('btn').addEventListener('click', function() {
+    document.getElementById('btn').addEventListener('click', function () {
       count++;
       counter.textContent = count;
     });
+
+    setTimeout(() => {
+      console.warn(1111);
+
+      changeColor();
+    }, 5000);
   </script>
 </body>
+
 </html>
