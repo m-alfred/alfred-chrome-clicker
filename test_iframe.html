@@ -5,26 +5,69 @@
   <meta charset="UTF-8">
   <title>测试iframe点击</title>
   <style>
-    body {
-      font-family: sans-serif;
+    #main-content {
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background: #fff;
+    }
+
+    .counter-wrap {
+      font-size: 18px;
+      margin: 12px 0;
+      font-weight: bold;
+    }
+
+    .counter-label {
+      font-weight: normal;
+      color: inherit;
     }
 
     #counter {
-      font-size: 2em;
-      margin: 20px;
+      font-weight: bold;
+      color: #266eee;
+      font-size: 24px;
     }
 
-    #btn {
-      font-size: 1.5em;
+    button {
+      min-width: 120px;
+      max-width: 100%;
+      padding: 8px 24px;
+      margin-bottom: 20px;
+      display: block;
+      border-radius: 4px;
+      border: 1px solid #266eee;
+      background: #266eee;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-sizing: border-box;
+    }
+
+    button:hover {
+      background: #155ec9;
+      border-color: #155ec9;
+    }
+
+    #test-canvas {
+      display: block;
+      margin: 24px auto 0 auto;
     }
   </style>
 </head>
 
 <body>
-  <div id="counter">0</div>
-  <button id="btn">iframe按钮</button>
-  <br>
-  <canvas id="test-canvas" width="600" height="400" style="border:1px solid #aaa;"></canvas>
+  <div id="main-content">
+    <div class="counter-wrap">
+      <span class="counter-label">当前计数：</span><span id="counter">0</span>
+    </div>
+    <button id="btn">iframe +1</button>
+
+    <h4>iframe canvas点击测试区</h4>
+
+    <canvas id="test-canvas" width="600" height="400" style="border:1px solid #aaa;margin-top:24px;"></canvas>
+  </div>
   <script>
     let count = 0;
     const counter = document.getElementById('counter');

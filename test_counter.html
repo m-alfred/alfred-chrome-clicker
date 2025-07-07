@@ -5,37 +5,88 @@
   <meta charset="UTF-8">
   <title>点击计数器测试页</title>
   <style>
-    body {
-      font-family: Arial;
-      margin: 40px;
+    .container {
+      padding: 40px;
+    }
+
+    .counter-wrap {
+      font-size: 18px;
+      margin: 12px 0;
+      font-weight: bold;
+    }
+
+    .counter-label {
+      font-weight: normal;
+      color: inherit;
     }
 
     #counter {
-      font-size: 2em;
-      margin-bottom: 20px;
+      font-weight: bold;
+      color: #266eee;
+      font-size: 24px;
     }
 
-    #btn {
-      font-size: 1.5em;
-      padding: 10px 30px;
+    button {
+      min-width: 120px;
+      max-width: 100%;
+      padding: 8px 24px;
+      margin: 0 0 20px 0;
+      border-radius: 4px;
+      border: 1px solid #266eee;
+      background: #266eee;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-sizing: border-box;
+      display: inline-block;
+    }
+
+    button:hover {
+      background: #155ec9;
+    }
+
+    #main-content {
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #iframe-container {
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 32px;
+      padding-top: 8px;
+    }
+
+    #test-iframe {
+      border: none;
     }
   </style>
 </head>
 
 <body>
-  <div id="counter">0</div>
-  <button id="btn">点击我</button>
-  <script>
-    let count = 0;
-    const counter = document.getElementById('counter');
-    document.getElementById('btn').addEventListener('click', function () {
-      count++;
-      counter.textContent = count;
-    });
-  </script>
-  <hr>
-  <h3>iframe 测试区</h3>
-  <iframe id="test-iframe" src="test_iframe.html" width="650" height="600" style="border:1px solid #ccc;"></iframe>
+  <div class="container">
+    <div id="main-content">
+      <div class="counter-wrap">
+        <span class="counter-label">当前计数：</span><span id="counter">0</span>
+      </div>
+      <button id="btn">请点我 +1</button>
+    </div>
+    <div id="iframe-container">
+      <h3>iframe 测试区</h3>
+      <iframe id="test-iframe" src="test_iframe.html" width="800px" height="800px"></iframe>
+    </div>
+    <script>
+      let count = 0;
+      const counter = document.getElementById('counter');
+      document.getElementById('btn').addEventListener('click', function () {
+        count++;
+        counter.textContent = count;
+      });
+    </script>
+
 </body>
 
 </html>
