@@ -21,44 +21,111 @@
   // 注入js
   injectJs('inject.js');
 
-  // 只在iframe内部页面执行自动点击canvas逻辑
-  console.log('[content] window.self !== window.top:', window.self !== window.top, window.self, window.top);
-  if (window.self !== window.top) {
-    function simulateRealPointerClick(x, y) {
-      const canvas = document.querySelector('canvas');
-      console.log('[iframe simulateRealPointerClick] canvas:', canvas);
-      if (!canvas) {
-        console.log('[iframe simulateRealPointerClick] 没找到canvas');
-        return;
+  // 只在目标 frame 响应点击
+  function simulateViewportClick(x, y) {
+    if (window.self === window.top) {
+      // 顶层页面，判断目标点是否在某个iframe内
+      const iframes = Array.from(document.getElementsByTagName('iframe'));
+      for (const iframe of iframes) {
+        const rect = iframe.getBoundingClientRect();
+        if (
+          x >= rect.left && x <= rect.right &&
+          y >= rect.top && y <= rect.bottom
+        ) {
+          // 点在iframe内，只通知iframe
+          const innerX = x - rect.left;
+          const innerY = y - rect.top;
+          iframe.contentWindow.postMessage({
+            action: 'simulateViewportClick',
+            x: innerX,
+            y: innerY
+          }, '*');
+          return;
+        }
       }
-      const rect = canvas.getBoundingClientRect();
-      const clientX = rect.left + x;
-      const clientY = rect.top + y;
+      // 不在任何iframe内，直接在top页面执行
+      _simulateViewportClickOnThisWindow(x, y);
+    }
+    // 非顶层页面不主动响应
+  }
+
+  function _simulateViewportClickOnThisWindow(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!el) {
+      console.log('[simulateViewportClick] 没找到目标元素');
+      return;
+    }
+    if (el.tagName.toLowerCase() === 'canvas') {
+      // 计算canvas缩放，换算canvas内部坐标
+      const rect = el.getBoundingClientRect();
+      const scaleX = el.width / rect.width;
+      const scaleY = el.height / rect.height;
+      const canvasX = (x - rect.left) * scaleX;
+      const canvasY = (y - rect.top) * scaleY;
       const eventOpts = {
         bubbles: true,
         cancelable: true,
         composed: true,
-        clientX,
-        clientY,
-        screenX: window.screenX + clientX,
-        screenY: window.screenY + clientY,
-        pageX: window.scrollX + clientX,
-        pageY: window.scrollY + clientY,
+        clientX: x,
+        clientY: y,
+        screenX: window.screenX + x,
+        screenY: window.screenY + y,
+        pageX: window.scrollX + x,
+        pageY: window.scrollY + y,
         pointerId: 1,
         pointerType: 'mouse',
         isPrimary: true,
         button: 0
       };
       ['pointerdown', 'mousedown', 'mouseup', 'pointerup', 'click'].forEach(type => {
-        const evt = new PointerEvent(type, eventOpts);
-        canvas.dispatchEvent(evt);
+        let evt;
+        try {
+          evt = new PointerEvent(type, eventOpts);
+        } catch {
+          evt = new MouseEvent(type, eventOpts);
+        }
+        // 派发到canvas
+        el.dispatchEvent(evt);
+      });
+    } else {
+      // 普通元素直接派发事件
+      const eventOpts = {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        screenX: window.screenX + x,
+        screenY: window.screenY + y,
+        pageX: window.scrollX + x,
+        pageY: window.scrollY + y,
+        pointerId: 1,
+        pointerType: 'mouse',
+        isPrimary: true,
+        button: 0
+      };
+      ['pointerdown', 'mousedown', 'mouseup', 'pointerup', 'click'].forEach(type => {
+        let evt;
+        try {
+          evt = new PointerEvent(type, eventOpts);
+        } catch {
+          evt = new MouseEvent(type, eventOpts);
+        }
+        el.dispatchEvent(evt);
       });
     }
-
-    // 也可暴露到window供popup调用
-    window.simulateRealPointerClick = simulateRealPointerClick;
-    console.log('[content] simulateRealPointerClick 已暴露到window');
   }
+
+  // iframe内监听postMessage，只在自身frame处理点击
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.action === 'simulateViewportClick') {
+      _simulateViewportClickOnThisWindow(e.data.x, e.data.y);
+    }
+  });
+
+  // 暴露统一接口
+  window.simulateViewportClick = simulateViewportClick;
+  console.log('[content] simulateViewportClick 已暴露到window (只目标frame响应)');
+
 
   // 选点模式
   function enablePickPointMode() {
@@ -120,7 +187,7 @@
         return;
       }
       console.log(`[content] timer_click 第${i + 1}次: (${x},${y})`);
-      simulateRealPointerClick(x, y);
+      simulateViewportClick(x, y);
       i++;
       timerClickTimerId = setTimeout(doClick, interval);
     }
