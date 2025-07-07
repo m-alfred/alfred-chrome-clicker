@@ -67,18 +67,22 @@ alfred-chrome-cliker/
 }]
 ```
 
-### content-script 无法劫持网页js方法
-内容脚本位于隔离的环境中，因此内容脚本可以更改其 JavaScript 环境，而不会与网页或其他扩展程序的内容脚本冲突。内容脚本的执行环境与托管它们的网页彼此隔离，但它们共享对网页 DOM 的访问权限。
-使用`chrome.scripting.executeScript`注入脚本
+### chrome.scripting.executeScript 无法劫持网页js方法
+chrome.scripting.executeScript 注入的脚本，虽然可以指定在页面上下文执行，但实际上默认是在**“isolated world”（隔离环境）**下运行（即 content script 环境），它拿到的是一个“沙箱”window，无法影响页面自己的 window.console，只能影响自己。
+在content-script中通过DOM注入inject.js
 ```
-chrome.scripting.executeScript({
-    target: { tabId: tabs[0].id },
-    files: ['inject.js']
-  }).then((results) => {
-    console.log('脚本注入并执行成功:', results);
-  }).catch((err) => {
-    console.error('脚本注入失败:', err);
-  });
+function injectJs(src) {
+    console.log('injectJs 执行');
+    const jsPath = src || 'inject.js';
+    const tempScript = document.createElement('script');
+    console.log('injectJs src:', chrome.runtime.getURL(jsPath));
+    tempScript.src = chrome.runtime.getURL(jsPath);
+    tempScript.onload = () => {
+      console.log('injectJs 加载完成, 移除');
+      // tempScript.remove();
+    };
+    (document.head || document.documentElement).appendChild(tempScript);
+  }
 ```
 以下两个问题也是由于CSP策略导致，需要通过注入`inject.js`绕过沙箱限制
 1. Uncaught EvalError: Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: "script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' 

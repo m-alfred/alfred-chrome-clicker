@@ -1,5 +1,8 @@
-// inject.js 反调试工具集，针对 test_debugger.html 的每个防调试手段反制
+// inject.js 调试工具集，针对 test_debugger.html 的每个防调试手段反制
 (function () {
+  // 调试提示
+  console.log('[inject.js] 调试工具已注入并执行');
+
   // 还原右键和调试快捷键
   function unblockContextMenuAndKeys() {
     // 移除所有 contextmenu 监听
@@ -31,36 +34,38 @@
   bypassDevToolsDetection();
   bypassIframeBlock();
 
-  // 调试提示
-  console.log('[inject.js] 反调试工具已注入并执行');
+  function overrideConsole() {
 
-  //   console.log('inject.js 已加载');
+    const ARRAY_LIMIT = 20;
+    // 要重写的console方法列表
+    const methods = [
+      'log', 'info', 'warn', 'error', 'debug', 'table', 'dir', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'assert', 'count', 'countReset', 'time', 'timeEnd', 'timeLog', 'profile', 'profileEnd', 'dirxml'
+    ];
+    // 保留原始方法
+    const rawConsole = {};
+    methods.forEach(fn => {
+      rawConsole[fn] = console[fn] ? console[fn].bind(console) : undefined;
+    });
+    // 重写方法
+    methods.forEach(fn => {
+      if (!rawConsole[fn]) return;
+      console[fn] = function (...args) {
+        if (args.some(a => Array.isArray(a) && a.length > ARRAY_LIMIT)) {
+          rawConsole.log(`[console.${fn}] 大数组输出已被屏蔽:`, ...args.map(a => Array.isArray(a) && a.length > ARRAY_LIMIT ? `[Array(${a.length})]` : a));
+          return;
+        }
+        return rawConsole[fn](...args);
+      };
+    });
+    // 特殊处理console.clear
+    Object.defineProperty(console, 'clear', {
+      value: function () {
+        rawConsole.log('inject.js 页面清空控制台');
+      },
+      configurable: true
+    });
+  }
 
-  //   // 要重写的console方法列表
-  //   const methods = [
-  //     'log', 'info', 'warn', 'error', 'debug', 'table', 'dir', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'assert', 'count', 'countReset', 'time', 'timeEnd', 'timeLog', 'profile', 'profileEnd', 'dirxml'
-  //   ];
-  //   // 保留原始方法
-  //   const rawConsole = {};
-  //   methods.forEach(fn => {
-  //     rawConsole[fn] = console[fn] ? console[fn].bind(console) : undefined;
-  //   });
-  //   // 重写方法
-  //   methods.forEach(fn => {
-  //     if (!rawConsole[fn]) return;
-  //     console[fn] = function (...args) {
-  //       // if (args.some(a => Array.isArray(a) && a.length > ARRAY_LIMIT)) {
-  //       //   rawConsole.log(`[console.${fn}] 大数组输出已被屏蔽:`, ...args.map(a => Array.isArray(a) && a.length > ARRAY_LIMIT ? `[Array(${a.length})]` : a));
-  //       //   return;
-  //       // }
-  //       // return rawConsole[fn](...args);
-  //     };
-  //   });
-  //   // 特殊处理console.clear
-  //   Object.defineProperty(console, 'clear', {
-  //     value: function () {
-  //       // rawConsole.log('inject.js 页面清空控制台');
-  //     },
-  //     configurable: true
-  //   });
+  overrideConsole();
+
 })();

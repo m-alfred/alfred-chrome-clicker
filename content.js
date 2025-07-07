@@ -6,6 +6,10 @@
   console.log('当前页面url:', location.href);
   console.log('是否顶层:', window.top === window.self ? '是' : '否');
 
+  /**
+   * content.js 通过 DOM 注入 <script> 标签，代码会在**页面的主环境（window）**下执行，和页面自己的 JS 处于同一个作用域，能直接影响/覆盖页面的全局对象（如 window.console）。
+   * @param {*} src 
+   */
   function injectJs(src) {
     console.log('injectJs 执行');
     const jsPath = src || 'inject.js';
@@ -18,8 +22,26 @@
     };
     (document.head || document.documentElement).appendChild(tempScript);
   }
-  // 注入js
-  injectJs('inject.js');
+  chrome.storage.sync.get(['autoInject'], function (result) {
+    console.log('autoInject:', result.autoInject);
+
+    if (result.autoInject) {
+      // 动态插入 inject.js
+      injectJs('inject.js');
+    }
+  });
+
+  // 支持popup手动注入请求
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (request.action === 'inject_injectjs') {
+      try {
+        injectJs('inject.js');
+        sendResponse({ success: true, msg: 'inject.js 已DOM注入' });
+      } catch (e) {
+        sendResponse({ success: false, msg: e.message });
+      }
+    }
+  });
 
   // 只在目标 frame 响应点击
   function simulateViewportClick(x, y) {
@@ -129,7 +151,7 @@
 
   // 暴露统一接口
   window.simulateViewportClick = simulateViewportClick;
-  console.log('[content] simulateViewportClick 已暴露到window (只目标frame响应)');
+  console.log('[content] simulateViewportClick 已暴露到window');
 
 
   // 选点模式

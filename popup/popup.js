@@ -1,6 +1,19 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  function reloadTab() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      chrome.tabs.reload(tabs[0].id);
+    });
+  }
+
+  // 自动注入配置
+  chrome.storage.sync.get(['autoInject'], function (result) {
+    const autoInjectCkb = document.getElementById('auto-inject-checkbox');
+    // 同步勾选状态到UI
+    autoInjectCkb.checked = !!result.autoInject;
+  });
+
   const xInput = document.getElementById('x');
   const yInput = document.getElementById('y');
   const status = document.getElementById('status');
@@ -76,32 +89,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 注入脚本按钮
-  const injectBtn = document.getElementById('inject-script');
-  if (injectBtn) {
-    injectBtn.addEventListener('click', () => {
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          files: ['inject.js']
-        }).then((results) => {
-          console.log('脚本注入并执行成功:', results);
-        }).catch((err) => {
-          console.error('脚本注入失败:', err);
-        });
+  document.getElementById('auto-inject-checkbox').addEventListener('change', function (e) {
+    chrome.storage.sync.set({ autoInject: e.target.checked });
+    // 自动刷新页面
+    reloadTab();
+  });
+
+  document.getElementById('inject-script').addEventListener('click', injectScript);
+
+  document.getElementById('refresh-tab').addEventListener('click', function () {
+    reloadTab();
+  });
+
+
+  // ====== 统一脚本注入函数 ======
+  function injectScript() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      // 通过消息通知content.js执行DOM注入inject.js，确保能劫持页面window.console
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'inject_injectjs' }, function (response) {
+        if (chrome.runtime.lastError) {
+          console.error('注入消息发送失败:', chrome.runtime.lastError.message);
+        } else {
+          console.log('注入消息已发送，content.js返回：', response);
+        }
       });
+
+      // /**
+      //  * 以指定在页面上下文执行，但实际上默认是在**“isolated world”（隔离环境）**下运行（即 content script 环境），它拿到的是一个“沙箱”window，无法影响页面自己的 window.console，只能影响自己
+      //  */
+      // chrome.scripting.executeScript({
+      //   target: { tabId: tabs[0].id },
+      //   files: ['inject.js']
+      // }).then((results) => {
+      //   console.log('脚本注入并执行成功:', results);
+      // }).catch((err) => {
+      //   console.error('脚本注入失败:', err);
+      // });
     });
   }
-});
-
-
-// chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-//   chrome.scripting.executeScript({
-//     target: { tabId: tabs[0].id },
-//     files: ['inject.js']
-//   }).then((results) => {
-//     console.log('脚本注入并执行成功:', results);
-//   }).catch((err) => {
-//     console.error('脚本注入失败:', err);
-//   });
-// });
+})
