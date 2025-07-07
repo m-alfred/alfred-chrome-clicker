@@ -29,17 +29,20 @@
     } catch (e) { }
   }
 
-  // 依次调用所有反调试工具
-  unblockContextMenuAndKeys();
-  bypassDevToolsDetection();
-  bypassIframeBlock();
+  // 依次调用所有反调试工具，自家看情况开启
+  // unblockContextMenuAndKeys();
+  // bypassDevToolsDetection();
+  // bypassIframeBlock();
 
   function overrideConsole() {
 
     const ARRAY_LIMIT = 20;
     // 要重写的console方法列表
     const methods = [
-      'log', 'info', 'warn', 'error', 'debug', 'table', 'dir', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'assert', 'count', 'countReset', 'time', 'timeEnd', 'timeLog', 'profile', 'profileEnd', 'dirxml'
+      // 仅保留error
+      'log', 'info', 'warn',
+      // 'error',
+      'debug', 'table', 'dir', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'assert', 'count', 'countReset', 'time', 'timeEnd', 'timeLog', 'profile', 'profileEnd', 'dirxml'
     ];
     // 保留原始方法
     const rawConsole = {};
@@ -50,17 +53,19 @@
     methods.forEach(fn => {
       if (!rawConsole[fn]) return;
       console[fn] = function (...args) {
-        if (args.some(a => Array.isArray(a) && a.length > ARRAY_LIMIT)) {
-          rawConsole.log(`[console.${fn}] 大数组输出已被屏蔽:`, ...args.map(a => Array.isArray(a) && a.length > ARRAY_LIMIT ? `[Array(${a.length})]` : a));
-          return;
-        }
-        return rawConsole[fn](...args);
+        // 对于一些循环执行console的场景，直接关闭输出
+        // if (args.some(a => Array.isArray(a) && a.length > ARRAY_LIMIT)) {
+        //   rawConsole.log(`[console.${fn}] 大数组输出已被屏蔽:`, ...args.map(a => Array.isArray(a) && a.length > ARRAY_LIMIT ? `[Array(${a.length})]` : a));
+        //   return;
+        // }
+        // return rawConsole[fn](...args);
       };
     });
     // 特殊处理console.clear
     Object.defineProperty(console, 'clear', {
       value: function () {
-        rawConsole.log('inject.js 页面清空控制台');
+        // 对于一些循环执行console的场景，直接关闭输出
+        // rawConsole.log('inject.js 页面清空控制台');
       },
       configurable: true
     });
