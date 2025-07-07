@@ -6,7 +6,7 @@
   <title>测试iframe点击</title>
   <style>
     #main-content {
-      padding: 20px;
+      padding: 20px 20px 40px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       background: #fff;
@@ -50,9 +50,13 @@
       border-color: #155ec9;
     }
 
-    #test-canvas {
+    #test-canvas,
+    #test-canvas2 {
+      width: 600px;
+      height: 300;
       display: block;
       margin-top: 24px;
+      border: 1px solid #aaa;
     }
   </style>
 </head>
@@ -66,7 +70,8 @@
 
     <h4>iframe canvas点击测试区</h4>
 
-    <canvas id="test-canvas" width="600" height="400" style="border:1px solid #aaa;margin-top:24px;"></canvas>
+    <canvas id="test-canvas" width="600" height="300"></canvas>
+    <canvas id="test-canvas2" width="1200" height="600"></canvas>
   </div>
   <script>
     let count = 0;
@@ -87,6 +92,22 @@
       ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fillStyle = 'red';
       ctx.fill();
+    });
+    // 高密度canvas点击画红点
+    const canvas2 = document.getElementById('test-canvas2');
+    const ctx2 = canvas2.getContext('2d');
+    canvas2.addEventListener('click', function (e) {
+      const rect = canvas2.getBoundingClientRect();
+      // css坐标转实际画布坐标
+      const scaleX = canvas2.width / rect.width;
+      const scaleY = canvas2.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      ctx2.beginPath();
+      // 画布密度两倍，所以半径也两倍
+      ctx2.arc(x, y, 6, 0, Math.PI * 2);
+      ctx2.fillStyle = 'red';
+      ctx2.fill();
     });
   </script>
 </body>
