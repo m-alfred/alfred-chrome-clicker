@@ -24,15 +24,31 @@
 
 ```
 alfred-chrome-cliker/
-├── content.js      # 注入到网页中的脚本，实现页面自动化或交互逻辑
-├── manifest.json   # Chrome 扩展的配置文件，声明权限、入口等信息
-├── popup/
-│   ├── popup.html      # 扩展弹窗的 HTML 页面
-│   └── popup.js        # 弹窗页面的逻辑脚本
-├── test/
-│   ├── test_counter.html   # 主测试页面
-│   └── test_iframe.html    # iframe 嵌套测试页
+├── manifest.json           # Chrome扩展配置文件
+├── background.js           # 后台Service Worker脚本
+├── content.js              # 注入网页的内容脚本，主自动化逻辑
+├── inject.js               # 以<Script>方式注入页面，绕过沙箱限制
+├── README.md               # 项目说明文档
+├── icons/                  # 扩展图标资源
+│   ├── favicon.ico
+│   ├── favicon-16x16.png
+│   └── favicon-192x192.png
+├── popup/                  # 扩展弹窗相关代码
+│   ├── popup.html          # 弹窗页面
+│   └── popup.js            # 弹窗逻辑脚本
+├── test/                   # 测试与演示页面
+│   ├── index.html          # 主测试页面
+│   └── test_iframe.html    # iframe嵌套测试页
 ```
+
+- `content.js`：自动点击等核心逻辑，注入所有页面和iframe。
+- `inject.js`：以原生script注入，支持劫持页面js方法。
+- `background.js`：后台事件、消息监听。
+- `popup/`：扩展弹窗UI及交互逻辑。
+- `test/`：本地测试主页面和iframe页面，便于调试跨frame点击。
+- `icons/`：扩展图标。
+
+如需进一步定制功能，请根据实际需求修改 `content.js`、`popup/popup.js`、`test/index.html` 等。
 
 如需进一步定制功能，请根据实际需求修改 `content.js` 或 `popup/popup.js`。
 
@@ -74,3 +90,6 @@ chrome.scripting.executeScript({
   }
 ],
 ```
+
+### 点击事件处理
+区分top、iframe和canvas事件处理
