@@ -103,3 +103,6 @@ function injectJs(src) {
 
 ### 点击事件处理
 区分top、iframe和canvas事件处理
+
+### canvas元素或者父元素祖先元素通过transform进行缩放会影响实际点击位置
+scale、zoom、rotate会影响像素密度或坐标系，需要换算，translateX 只会让 canvas 整体移动，不会导致点击坐标错位或需要修正。

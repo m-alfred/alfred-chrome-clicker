@@ -79,6 +79,7 @@
     }
     if (el.tagName.toLowerCase() === 'canvas') {
       // 计算canvas缩放，换算canvas内部坐标
+      // 对于transform过的canvas，需要考虑scale和rotate
       const rect = el.getBoundingClientRect();
       const scaleX = el.width / rect.width;
       const scaleY = el.height / rect.height;
@@ -155,6 +156,7 @@
 
 
   // 选点模式
+  // 选点都是基于CSS坐标相对视口的位置
   function enablePickPointMode() {
     if (window.self !== window.top) {
       // 只允许顶层页面进入选点模式
@@ -215,6 +217,7 @@
   // 定时多次点击
   // 防止重复定时点击
   let timerClickTimerId = null;
+  // x, y 对应clientX/clientY
   function startTimerClick(x, y, interval, count) {
     // 如果已有任务，先取消
     if (timerClickTimerId) {

@@ -71,7 +71,15 @@
     <h4>iframe canvas点击测试区</h4>
 
     <canvas id="test-canvas" width="600" height="300"></canvas>
+
     <canvas id="test-canvas2" width="1200" height="600"></canvas>
+
+    <div style="transform: rotate(30deg) scale(0.5);">
+      <canvas id="test-canvas-scale" width="600" height="300"
+        style="border:1px solid #aaa; display:block; margin-top:16px;"></canvas>
+    </div>
+
+    <div id="canvas-scale-info" style="margin-bottom:12px;color:#266eee;"></div>
   </div>
   <script>
     let count = 0;
@@ -93,6 +101,7 @@
       ctx.fillStyle = 'red';
       ctx.fill();
     });
+
     // 高密度canvas点击画红点
     const canvas2 = document.getElementById('test-canvas2');
     const ctx2 = canvas2.getContext('2d');
@@ -108,6 +117,61 @@
       ctx2.arc(x, y, 6, 0, Math.PI * 2);
       ctx2.fillStyle = 'red';
       ctx2.fill();
+    });
+
+    // 新增：带scale修正的canvas
+    const canvasTransform = document.getElementById('test-canvas-scale');
+    const ctxTransform = canvasTransform.getContext('2d');
+    function getParentTransform() {
+      const wrapper = canvasTransform.parentElement;
+      const style = window.getComputedStyle(wrapper);
+      const transform = style.transform;
+      let scale = 1, angle = 0;
+      if (transform && transform.startsWith('matrix')) {
+        // matrix(a, b, c, d, tx, ty)
+        const m = transform.match(/^matrix\(([^,]+), ([^,]+), ([^,]+), ([^,]+),/);
+        if (m) {
+          const a = parseFloat(m[1]);
+          const b = parseFloat(m[2]);
+          // scale = sqrt(a^2 + b^2)
+          scale = Math.sqrt(a * a + b * b);
+          // 旋转角度 = atan2(b, a)
+          angle = Math.atan2(b, a);
+        }
+      } else if (transform && transform.startsWith('scale')) {
+        const match = transform.match(/scale\(([^)]+)\)/);
+        if (match) scale = parseFloat(match[1]);
+      }
+      return { scale, angle };
+    }
+    canvasTransform.addEventListener('click', function (e) {
+      const rect = canvasTransform.getBoundingClientRect();
+      const { scale, angle } = getParentTransform();
+      // 1. 以视觉中心为原点
+      const visualX = e.clientX - rect.left;
+      const visualY = e.clientY - rect.top;
+      const dx = visualX - rect.width / 2;
+      const dy = visualY - rect.height / 2;
+      // 2. 逆向旋转
+      const sin = Math.sin(-angle);
+      const cos = Math.cos(-angle);
+      const rx = dx * cos - dy * sin;
+      const ry = dx * sin + dy * cos;
+      // 3. 除以 scale，得到未变换前的偏移
+      const sx = rx / scale;
+      const sy = ry / scale;
+      // 4. 平移到canvas原始像素坐标（以canvas.width/2, canvas.height/2为中心）
+      const x = canvasTransform.width / 2 + sx;
+      const y = canvasTransform.height / 2 + sy;
+      ctxTransform.beginPath();
+      ctxTransform.arc(x, y, 3, 0, 2 * Math.PI);
+      ctxTransform.fillStyle = 'red';
+      ctxTransform.fill();
+      // 展示坐标、scale、角度
+      let info = document.getElementById('canvas-scale-info');
+      if (info) {
+        info.textContent = `scale: ${scale.toFixed(3)}, rotate: ${(angle * 180 / Math.PI).toFixed(1)}°, x: ${x.toFixed(2)}, y: ${y.toFixed(2)}`;
+      }
     });
   </script>
 </body>
