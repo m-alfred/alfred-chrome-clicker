@@ -129,6 +129,11 @@
 
   // 选点模式
   function enablePickPointMode() {
+    if (window.self !== window.top) {
+      // 只允许顶层页面进入选点模式
+      console.log('[content] 非顶层frame，忽略选点请求');
+      return;
+    }
     console.log('[content] 进入enablePickPointMode');
     // 创建遮罩
     const mask = document.createElement('div');
