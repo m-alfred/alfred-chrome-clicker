@@ -147,6 +147,11 @@
     mask.style.cursor = 'crosshair';
     mask.style.userSelect = 'none';
     document.body.appendChild(mask);
+    function cleanup() {
+      mask.remove();
+      window.removeEventListener('click', onClick, true);
+      window.removeEventListener('keydown', onKeydown, true);
+    }
     function onClick(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -156,10 +161,16 @@
       chrome.runtime.sendMessage({ action: 'picked_point', x, y }, (res) => {
         console.log('[content] picked_point已发送至background，返回：', res);
       });
-      mask.remove();
-      window.removeEventListener('click', onClick, true);
+      cleanup();
+    }
+    function onKeydown(e) {
+      if (e.key === 'Escape') {
+        console.log('[content] 选点模式已取消(Esc)');
+        cleanup();
+      }
     }
     window.addEventListener('click', onClick, true);
+    window.addEventListener('keydown', onKeydown, true);
   }
   // 监听popup发来的选点请求
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
