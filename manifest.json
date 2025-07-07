@@ -7,9 +7,7 @@
     "activeTab",
     "scripting",
     "storage",
-    "tabs",
-    "cookies",
-    "windows"
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

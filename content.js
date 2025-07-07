@@ -62,6 +62,11 @@
       const scaleY = el.height / rect.height;
       const canvasX = (x - rect.left) * scaleX;
       const canvasY = (y - rect.top) * scaleY;
+      /**
+       * 模拟真实用户点击时，建议像浏览器原生事件那样，把 clientX、pageX、screenX 都按实际坐标补全，确保最大兼容性和还原度。
+       * 对大部分简单页面，仅有 clientX/clientY 也能正常触发点击
+       * 事件派发和页面上事件处理都是基于CSS 像素坐标，所以即使2倍密度的canvas，也能对应上
+       */
       const eventOpts = {
         bubbles: true,
         cancelable: true,

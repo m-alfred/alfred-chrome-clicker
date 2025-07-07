@@ -1,38 +1,66 @@
-// // 劫持console.log/console.table/console.dir，屏蔽大数组输出
-// (function () {
-//   const ARRAY_LIMIT = 30; // 超过多少元素认为是大数组
-//   console.log('inject.js 已加载');
+// inject.js 反调试工具集，针对 test_debugger.html 的每个防调试手段反制
+(function () {
+  // 还原右键和调试快捷键
+  function unblockContextMenuAndKeys() {
+    // 移除所有 contextmenu 监听
+    // 在捕获阶段就把事件拦截住并阻止后续传播，所以页面的 preventDefault 根本没机会执行
+    window.addEventListener('contextmenu', e => e.stopImmediatePropagation(), true);
+    // 阻止 keydown 事件冒泡，防止页面拦截
+    window.addEventListener('keydown', e => e.stopImmediatePropagation(), true);
+  }
 
-//   // 要重写的console方法列表
-//   const methods = [
-//     'log', 'info', 'warn', 'error', 'debug', 'table', 'dir', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'assert', 'count', 'countReset', 'time', 'timeEnd', 'timeLog', 'profile', 'profileEnd', 'dirxml'
-//   ];
-//   // 保留原始方法
-//   const rawConsole = {};
-//   methods.forEach(fn => {
-//     rawConsole[fn] = console[fn] ? console[fn].bind(console) : undefined;
-//   });
-//   // 重写方法
-//   methods.forEach(fn => {
-//     if (!rawConsole[fn]) return;
-//     console[fn] = function (...args) {
-//       // if (args.some(a => Array.isArray(a) && a.length > ARRAY_LIMIT)) {
-//       //   rawConsole.log(`[console.${fn}] 大数组输出已被屏蔽:`, ...args.map(a => Array.isArray(a) && a.length > ARRAY_LIMIT ? `[Array(${a.length})]` : a));
-//       //   return;
-//       // }
-//       // return rawConsole[fn](...args);
-//     };
-//   });
-//   // 特殊处理console.clear
-//   Object.defineProperty(console, 'clear', {
-//     value: function () {
-//       // rawConsole.log('inject.js 页面清空控制台');
-//     },
-//     configurable: true
-//   });
-//   // 额外功能演示
-//   window.changeColor = function () {
-//     // document.body.style.backgroundColor = 'blue';
-//   };
-// })();
+  // 绕过DevTools检测（伪造窗口尺寸）
+  function bypassDevToolsDetection() {
+    // 伪造 outerWidth/outerHeight
+    try {
+      Object.defineProperty(window, 'outerWidth', { get() { return window.innerWidth; }, configurable: true });
+      Object.defineProperty(window, 'outerHeight', { get() { return window.innerHeight; }, configurable: true });
+    } catch (e) { }
+  }
 
+  // 绕过iframe检测
+  function bypassIframeBlock() {
+    try {
+      Object.defineProperty(window, 'top', { get: () => window });
+      Object.defineProperty(window, 'self', { get: () => window });
+    } catch (e) { }
+  }
+
+  // 依次调用所有反调试工具
+  unblockContextMenuAndKeys();
+  bypassDevToolsDetection();
+  bypassIframeBlock();
+
+  // 调试提示
+  console.log('[inject.js] 反调试工具已注入并执行');
+
+  //   console.log('inject.js 已加载');
+
+  //   // 要重写的console方法列表
+  //   const methods = [
+  //     'log', 'info', 'warn', 'error', 'debug', 'table', 'dir', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'assert', 'count', 'countReset', 'time', 'timeEnd', 'timeLog', 'profile', 'profileEnd', 'dirxml'
+  //   ];
+  //   // 保留原始方法
+  //   const rawConsole = {};
+  //   methods.forEach(fn => {
+  //     rawConsole[fn] = console[fn] ? console[fn].bind(console) : undefined;
+  //   });
+  //   // 重写方法
+  //   methods.forEach(fn => {
+  //     if (!rawConsole[fn]) return;
+  //     console[fn] = function (...args) {
+  //       // if (args.some(a => Array.isArray(a) && a.length > ARRAY_LIMIT)) {
+  //       //   rawConsole.log(`[console.${fn}] 大数组输出已被屏蔽:`, ...args.map(a => Array.isArray(a) && a.length > ARRAY_LIMIT ? `[Array(${a.length})]` : a));
+  //       //   return;
+  //       // }
+  //       // return rawConsole[fn](...args);
+  //     };
+  //   });
+  //   // 特殊处理console.clear
+  //   Object.defineProperty(console, 'clear', {
+  //     value: function () {
+  //       // rawConsole.log('inject.js 页面清空控制台');
+  //     },
+  //     configurable: true
+  //   });
+})();

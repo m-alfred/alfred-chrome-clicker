@@ -39,6 +39,7 @@ alfred-chrome-cliker/
 ├── test/                   # 测试与演示页面
 │   ├── index.html          # 主测试页面
 │   └── test_iframe.html    # iframe嵌套测试页
+│   └── test_debugger.html  # 防调试测试页（自家测试用的）
 ```
 
 - `content.js`：自动点击等核心逻辑，注入所有页面和iframe。
@@ -53,6 +54,7 @@ alfred-chrome-cliker/
 如需进一步定制功能，请根据实际需求修改 `content.js` 或 `popup/popup.js`。
 
 ## 脚本注入
+通过注入inject.js修改页面js方法。可以自行修改inject.js中的内容。通过开发者模式加载插件
 
 
 ## 开发中遇到的问题
@@ -78,6 +80,10 @@ chrome.scripting.executeScript({
     console.error('脚本注入失败:', err);
   });
 ```
+以下两个问题也是由于CSP策略导致，需要通过注入`inject.js`绕过沙箱限制
+1. Uncaught EvalError: Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: "script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' 
+
+2. Refused to execute inline script because it violates the following Content Security Policy directive: "script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' 
 
 ### iframe中注入代码失败
 设置`all_frames`为`true`，all_frames指定是否应将 JavaScript 和 CSS 文件注入与指定网址要求匹配的所有框架，还是仅注入标签页中的顶层框架

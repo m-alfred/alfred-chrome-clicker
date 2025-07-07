@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>防调试演示页 test_debugger</title>
+  <style>
+    body {
+      padding: 30px;
+    }
+
+    h2 {
+      color: #266eee;
+    }
+
+    .tip {
+      color: #d32f2f;
+      margin-bottom: 18px;
+    }
+
+    .btn {
+      min-width: 120px;
+      max-width: 100%;
+      padding: 8px 24px;
+      margin: 0 16px 20px 0;
+      border-radius: 4px;
+      border: 1px solid #266eee;
+      background: #266eee;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-sizing: border-box;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: #155ec9;
+    }
+
+    .btn-gray {
+      background: #e0e0e0;
+      color: #444;
+      border: 1px solid #bbbbbb;
+    }
+
+    .btn-gray:hover {
+      background: #bbbbbb;
+      color: #222;
+      border: 1px solid #999999;
+    }
+  </style>
+
+</head>
+
+<body>
+  <h2>防调试演示页</h2>
+  <div class="tip">本页面集成多种常见前端防调试手段，尝试右键、F12、打开控制台、iframe嵌套等，页面会有不同反应。</div>
+  <div style="margin-bottom:20px;">
+    <button class="btn" id="btn-block-ctx">屏蔽右键/快捷键</button>
+    <button class="btn" id="btn-devtools">检测DevTools</button>
+    <button class="btn" id="btn-debugger">死循环debugger</button>
+    <button class="btn" id="btn-console">劫持console</button>
+    <button class="btn" id="btn-iframe">iframe检测</button>
+    <button class="btn btn-gray" onclick="window.location.reload()">刷新页面</button>
+  </div>
+  <div style="margin-top:30px;color:#888;font-size:14px;">如需绕过这些防护，可用inject.js进行反调试。</div>
+
+  <script>
+    // 屏蔽右键和快捷键
+    function blockContextMenuAndKeys() {
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', function (e) {
+        if (
+          e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C')) ||
+          (e.ctrlKey && e.key === 'U')
+        ) {
+          e.preventDefault();
+          alert('禁止调试！');
+          return false;
+        }
+      });
+    }
+    // 检测DevTools
+    function detectDevTools() {
+      let devtoolsOpen = false;
+      setInterval(function () {
+        const threshold = 160;
+        if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+          if (!devtoolsOpen) {
+            devtoolsOpen = true;
+            document.body.innerHTML = '<h2>检测到开发者工具已打开，页面已锁定！</h2>';
+          }
+        }
+      }, 500);
+    }
+    // 死循环debugger
+    // 此处放在blockDebugger方法里是为了调用方便，实际中要放在匿名函数中，防止通过全局方法修改破解
+    function blockDebugger() {
+      setTimeout(() => {
+        while (true) {
+          debugger;
+        }
+      }, 1000);
+    }
+    // 劫持console
+    function hijackConsole() {
+      console.log = function () { alert('console.log已被禁用！'); };
+      console.clear = function () { alert('console.clear已被禁用！'); };
+    }
+    // 工具5：检测iframe嵌套
+    function blockIframe() {
+      if (window.top !== window.self) {
+        document.body.innerHTML = '<h2>禁止iframe嵌套调试！</h2>';
+      }
+    }
+    // 按钮触发各防调试功能
+    document.getElementById('btn-block-ctx').onclick = function () {
+      console.log('已触发 屏蔽右键/快捷键 防调试功能');
+      blockContextMenuAndKeys();
+    };
+    document.getElementById('btn-devtools').onclick = function () {
+      console.log('已触发 检测DevTools 防调试功能');
+      detectDevTools();
+    };
+    document.getElementById('btn-debugger').onclick = function () {
+      console.log('已触发 死循环debugger 防调试功能');
+      blockDebugger();
+    };
+    document.getElementById('btn-console').onclick = function () {
+      console.log('已触发 劫持console 防调试功能');
+      hijackConsole();
+    };
+    document.getElementById('btn-iframe').onclick = function () {
+      console.log('已触发 iframe检测 防调试功能');
+      blockIframe();
+    };
+
+  </script>
+</body>
+
+</html>

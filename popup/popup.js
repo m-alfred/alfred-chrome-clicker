@@ -93,3 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+// chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+//   chrome.scripting.executeScript({
+//     target: { tabId: tabs[0].id },
+//     files: ['inject.js']
+//   }).then((results) => {
+//     console.log('脚本注入并执行成功:', results);
+//   }).catch((err) => {
+//     console.error('脚本注入失败:', err);
+//   });
+// });
