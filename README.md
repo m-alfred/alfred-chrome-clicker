@@ -5,6 +5,9 @@
 - 兼容多层嵌套 iframe、复杂 CSS transform（如 scale、translate）场景，坐标换算精准。
 - 可用于模拟用户点击、自动化测试、辅助操作等多种场景。
 
+## TODO
+- [ ] 修复执行自动点击的时候滚动屏幕，点击位置不准确的问题。
+- [ ] 持久化x、y坐标，count，interval。
 ## 使用教程
 
 1. 克隆或下载本项目到本地。
@@ -62,7 +65,7 @@ alfred-chrome-cliker/
 通过el.dispatchEvent()触发点击事件。dispatchEvent派发PointerEvent和MouseEvent实例。
 
 ## 脚本注入
-通过注入inject.js修改页面js方法。可以自行修改inject.js中的内容。通过开发者模式加载插件
+谨慎开启！！！默认关闭。通过注入inject.js修改页面js方法。适合开发者，可以自行修改inject.js中的内容，通过开发者模式加载插件。
 
 
 ## 开发中遇到的问题

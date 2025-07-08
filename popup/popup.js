@@ -1,10 +1,27 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
   function reloadTab() {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       chrome.tabs.reload(tabs[0].id);
     });
+  }
+
+  // 脚本注入面板折叠/展开
+  const injectToggle = document.getElementById('inject-toggle');
+  const injectPanel = document.getElementById('inject-panel');
+  const injectArrow = document.getElementById('inject-arrow');
+  if (injectToggle && injectPanel && injectArrow) {
+    injectToggle.addEventListener('click', function () {
+      const expanded = injectPanel.classList.contains('inject-panel-expanded');
+      injectPanel.classList.toggle('inject-panel-collapsed', expanded);
+      injectPanel.classList.toggle('inject-panel-expanded', !expanded);
+      injectArrow.classList.toggle('inject-arrow-collapsed', expanded);
+      injectArrow.classList.toggle('inject-arrow-expanded', !expanded);
+    });
+    // 默认收起
+    injectPanel.classList.add('inject-panel-collapsed');
+    injectPanel.classList.remove('inject-panel-expanded');
+    injectArrow.classList.add('inject-arrow-collapsed');
+    injectArrow.classList.remove('inject-arrow-expanded');
   }
 
   // 自动注入配置
@@ -17,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const xInput = document.getElementById('x');
   const yInput = document.getElementById('y');
   const status = document.getElementById('status');
+  const startTimerBtn = document.getElementById('start-timer-click');
+  const stopTimerBtn = document.getElementById('stop-timer-click');
   // 读取已保存的坐标
   // 向background请求最新选点坐标
   chrome.runtime.sendMessage({ action: 'get_last_point' }, (res) => {
@@ -57,10 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 定时点击按钮
-  const startTimerBtn = document.getElementById('start-timer-click');
   if (startTimerBtn) {
     startTimerBtn.addEventListener('click', () => {
+      stopTimerBtn.style.display = '';
+
       const x = parseInt(xInput.value, 10) || 0;
       const y = parseInt(yInput.value, 10) || 0;
       const interval = parseInt(document.getElementById('interval').value, 10) || 1000;
@@ -75,6 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (stopTimerBtn) {
+    stopTimerBtn.addEventListener('click', function () {
+      // 通知 content.js 停止自动点击
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'stop_timer_click' });
+      });
+      stopTimerBtn.style.display = 'none';
+    });
+  }
+
   // 监听content.js返回的坐标
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     console.log('[popup] 收到消息:', msg);
@@ -86,6 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
         status.textContent = '已通过选点保存！';
         setTimeout(() => status.textContent = '', 1200);
       });
+    }
+
+    if (msg.action === 'timer_click_done') {
+      console.log('[popup] 收到timer_click_done消息');
+      stopTimerBtn.style.display = 'none';
     }
   });
 

@@ -295,6 +295,8 @@
       if (i >= count) {
         console.log('[content] 定时点击完成');
         timerClickTimerId = null;
+        // 发送消息给popup修改按钮状态
+        chrome.runtime.sendMessage({ action: 'timer_click_done' });
         return;
       }
       console.log(`[content] timer_click 第${i + 1}次: (${x},${y})`);
@@ -304,4 +306,14 @@
     }
     doClick();
   }
+  // 监听popup发来的停止自动点击指令
+  chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+    if (msg.action === 'stop_timer_click') {
+      if (timerClickTimerId) {
+        clearTimeout(timerClickTimerId);
+        timerClickTimerId = null;
+        console.log('[content] 收到停止自动点击指令，已终止');
+      }
+    }
+  });
 })();

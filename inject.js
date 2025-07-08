@@ -65,7 +65,7 @@
     Object.defineProperty(console, 'clear', {
       value: function () {
         // 对于一些循环执行console的场景，直接关闭输出
-        // rawConsole.log('inject.js 页面清空控制台');
+        rawConsole.log('inject.js 页面清空控制台');
       },
       configurable: true
     });

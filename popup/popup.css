@@ -98,3 +98,41 @@
   font-size: 14px;
   margin-top: 8px;
 }
+
+.inject-toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.inject-desc {
+  font-size: 12px;
+  color: #888;
+}
+
+.inject-arrow {
+  transition: .2s;
+  margin-left: 2px;
+}
+
+.inject-arrow-collapsed {
+  transform: none;
+}
+
+.inject-arrow-expanded {
+  transform: rotate(90deg);
+}
+
+.inject-panel-collapsed {
+  display: none;
+}
+
+.inject-panel-expanded {
+  display: block;
+}
+
+
+/* .pop-btn-stop {
+  display: none;
+} */
