@@ -7,6 +7,71 @@
   console.log('是否顶层:', window.top === window.self ? '是' : '否');
 
   /**
+   * 简单的逆推导，处理scale和translate，支持祖先多层级scale，不支持rotate
+   * 将全局坐标 (x, y) 逆向变换为 target 元素的本地坐标
+   * 1. 视口坐标（Viewport Coordinates）
+    也叫全局坐标，即 clientX、clientY。
+    参考点是浏览器窗口的左上角（不含滚动条偏移）。
+    鼠标事件（如 click、mousemove）默认返回的就是视口坐标。
+    2. 元素视觉坐标（Visual/Rendered Coordinates）
+    指事件点在目标元素的视觉区域内的位置，即“你看到的”元素左上角为 (0,0) 时，鼠标点在元素内部的坐标。
+    计算方式通常是：clientX - rect.left, clientY - rect.top，其中 rect 是 getBoundingClientRect() 得到的变换后矩形。
+    这个坐标已经包含了所有 CSS transform（scale、rotate、translate 等）带来的视觉影响。
+    你在页面上“看到”的点，就是视觉坐标的点。
+    3. 元素本地坐标（Local/Untransformed Coordinates）
+    指在元素自身未经过任何 transform 变换前的本地坐标。
+    比如一个 100x100 的 div，transform: scale(2) 后视觉上变成 200x200，但本地坐标还是 (0100, 0100)。
+    某些 API（如 canvas、SVG、iframe 内部事件）需要的就是这种坐标。
+    需要通过逆 transform 矩阵，把视觉坐标还原为本地坐标。
+    你的代码里各类坐标的关系
+    事件触发时，拿到的是全局坐标（clientX, clientY）。
+    用 clientX - rect.left, clientY - rect.top 得到的是视觉坐标（你“看到”的点在元素内的位置）。
+    通过逆 transform，把视觉坐标还原为本地坐标，用于真正的业务逻辑或跨 window/iframe 通信。
+  * @param {number} x - 全局 clientX
+  * @param {number} y - 全局 clientY
+  * @param {HTMLElement} target - 目标元素（如 iframe）
+  * @returns {{x: number, y: number}}
+  */
+  function globalPointToLocal(clientX, clientY, target) {
+    const rect = target.getBoundingClientRect();
+    // 计算点击点在元素视觉坐标系下的位置
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    // rect得到的位置已经是translate位置偏移后的坐标，所以不需要对translate做处理
+    // 2. 递归收集所有祖先 scale 并累乘
+    let el = target;
+    let sxTotal = 1, syTotal = 1;
+    while (el && el !== document.body && el !== document.documentElement) {
+      const style = window.getComputedStyle(el);
+      const transform = style.transform;
+      let sx = 1, sy = 1;
+      console.log('transform:', transform);
+      // 通过getComputedStyle获取的transform会转换成matrix形式，所以需要处理matrix，偏移量会转换成px，且是scale后的结果，比如scale(0.5) translateX(200px)会输出100px
+      // transformOrigin也会转换成px单位
+      if (transform && transform.startsWith('matrix')) {
+        // matrix(a, b, c, d, e, f)
+        const match = transform.match(/matrix\(([^)]+)\)/);
+        if (match) {
+          const parts = match[1].split(',').map(Number);
+          // 这里不考虑旋转，只考虑scale，取a、d
+          sx = parts[0];
+          sy = parts[3];
+        }
+      }
+      sxTotal *= sx;
+      syTotal *= sy;
+      el = el.parentElement;
+    }
+    console.log('sxTotal:', sxTotal, 'syTotal:', syTotal);
+    // 逆推导：视觉坐标除以缩放因子
+    return {
+      x: x / sxTotal,
+      y: y / syTotal
+    };
+  }
+
+  /**
    * content.js 通过 DOM 注入 <script> 标签，代码会在**页面的主环境（window）**下执行，和页面自己的 JS 处于同一个作用域，能直接影响/覆盖页面的全局对象（如 window.console）。
    * @param {*} src 
    */
@@ -55,8 +120,8 @@
           y >= rect.top && y <= rect.bottom
         ) {
           // 点在iframe内，只通知iframe
-          const innerX = x - rect.left;
-          const innerY = y - rect.top;
+          // 如果iframe祖先元素有scale或者rotate，需要考虑
+          const { x: innerX, y: innerY } = globalPointToLocal(x, y, iframe);
           iframe.contentWindow.postMessage({
             action: 'simulateViewportClick',
             x: innerX,

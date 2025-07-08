@@ -1,5 +1,10 @@
 # 项目说明（alfred-chrome-cliker）
 
+## 插件功能
+- 支持自动点击屏幕指定坐标，可自定义点击位置和频率。
+- 兼容多层嵌套 iframe、复杂 CSS transform（如 scale、translate）场景，坐标换算精准。
+- 可用于模拟用户点击、自动化测试、辅助操作等多种场景。
+
 ## 使用教程
 
 1. 克隆或下载本项目到本地。
@@ -53,6 +58,9 @@ alfred-chrome-cliker/
 
 如需进一步定制功能，请根据实际需求修改 `content.js` 或 `popup/popup.js`。
 
+## 点击事件触发
+通过el.dispatchEvent()触发点击事件。dispatchEvent派发PointerEvent和MouseEvent实例。
+
 ## 脚本注入
 通过注入inject.js修改页面js方法。可以自行修改inject.js中的内容。通过开发者模式加载插件
 
@@ -102,7 +110,37 @@ function injectJs(src) {
 ```
 
 ### 点击事件处理
-区分top、iframe和canvas事件处理
+区分top、iframe和canvas事件处理。
+#### iframe事件派发
+1. 事件作用域隔离
+iframe 和父页面（top window）是两个不同的文档环境。你在 top 页面拿到的 clientX/clientY 坐标，是相对于整个视口（viewport）的，而不是 iframe 内部的坐标。
+2. 坐标系不同
+iframe 内部的事件监听（比如 click）接收到的 clientX/clientY，是相对于 iframe 自己的视口的。如果你直接用 top 级的 clientX/clientY 去派发，会导致坐标不对，事件可能落不到你想要的元素上。
+3. 安全限制
+你不能直接跨域操作 iframe 的内容（比如派发事件），除非父页面和 iframe 是同源的。如果不同源，只能用 postMessage 通信，不能直接派发事件。
 
-### canvas元素或者父元素祖先元素通过transform进行缩放会影响实际点击位置
-scale、zoom、rotate会影响像素密度或坐标系，需要换算，translateX 只会让 canvas 整体移动，不会导致点击坐标错位或需要修正。
+正确做法：
+1. 先判断点击点是否在某个 iframe 内。
+2. 如果在，计算出相对于该 iframe 的坐标（innerX, innerY）。
+3. 用 postMessage 把坐标传递给 iframe。
+4. 由 iframe 自己在内部派发 click 事件。
+
+
+#### iframe点击事件换算
+一些iframe存在祖先原理出现scale、rotate，需要换算。
+rotate比较麻烦，而且不常见。工程代码里仅考虑scale。iframe的css宽高和dom元素上的宽高不会影响内容缩放，只是影响内容展示区域大小。但是iframe的transform会影响内容缩放。所以我们只需要从当前元素到跟根元素递归计算总的scale缩放，最后将点击坐标除以scale即可。
+
+#### css transform matrix结构
+CSS 2D matrix 形式为：
+matrix(a, b, c, d, e, f)
+对应矩阵为
+```
+| a  c  e |
+| b  d  f |
+| 0  0  1 |
+````
+a: 水平方向的 scale（+ 旋转分量）
+d: 垂直方向的 scale（+ 旋转分量）
+e: 水平平移（translateX）
+f: 垂直平移（translateY）
+b, c: 旋转/倾斜分量
