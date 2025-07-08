@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Transform逆推导测试</title>
+  <style>
+    body {
+      position: relative;
+      background: #f5f6fa;
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+
+    .desc {
+      margin: 24px 0 12px 0;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .test-shape {
+      width: 100px;
+      height: 100px;
+      background: #266eee;
+      position: absolute;
+      /* left: 100px;
+      top: 200px; */
+      left: 0;
+      top: 0;
+      transform: scale(2) translate(100px, 100px);
+      transform-origin: 50% 50%;
+      transform-origin: 0 0;
+      box-shadow: 0 2px 24px #0001;
+      cursor: pointer;
+      transition: box-shadow .2s;
+    }
+
+    .test-shape:active {
+      box-shadow: 0 4px 32px #0002;
+    }
+
+    #info {
+      margin-top: 440px;
+      font-size: 15px;
+      color: #444;
+      background: #fff;
+      border-radius: 6px;
+      padding: 12px 18px;
+      box-shadow: 0 2px 12px #0001;
+      min-width: 420px;
+      word-break: break-all;
+    }
+
+    .parent-box {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: scale(1.2);
+      transform-origin: 0 0;
+      border: 1px dashed #aaa;
+      width: 200px;
+      height: 200px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="desc">
+    测试 transform-origin + 多重变换的坐标逆推导。<br>
+    图形依次应用: <b>left:100, top:200, translateX(100), scale(2), rotate(45deg), transform-origin:0 0</b><br>
+    右下角视觉坐标应为 [200, 200]，理论视口坐标为 [200, 200+400*√2]。
+  </div>
+  <div class="parent-box">
+    <div class="test-shape" id="shape"></div>
+  </div>
+  <div id="info">点击蓝色矩形任意位置，查看坐标逆推导过程和结果。</div>
+  <script>
+
+    function simpleGlobalPointToLocal(clientX, clientY, target) {
+      const rect = target.getBoundingClientRect();
+      // 计算点击点在元素视觉坐标系下的位置
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      // rect得到的位置已经是translate位置偏移后的坐标，所以不需要对translate做处理
+      // 2. 递归收集所有祖先 scale 并累乘
+      let el = target;
+      let sxTotal = 1, syTotal = 1;
+      while (el && el !== document.body && el !== document.documentElement) {
+        const style = window.getComputedStyle(el);
+        const transform = style.transform;
+        let sx = 1, sy = 1;
+        console.log('transform:', transform);
+        // 通过getComputedStyle获取的transform会转换成matrix形式，所以需要处理matrix，偏移量会转换成px，且是scale后的结果，比如scale(0.5) translateX(200px)会输出100px
+        // transformOrigin也会转换成px单位
+        if (transform && transform.startsWith('matrix')) {
+          // matrix(a, b, c, d, e, f)
+          const match = transform.match(/matrix\(([^)]+)\)/);
+          if (match) {
+            const parts = match[1].split(',').map(Number);
+            // 这里不考虑旋转，只考虑scale，取a、d
+            sx = parts[0];
+            sy = parts[3];
+          }
+        }
+        sxTotal *= sx;
+        syTotal *= sy;
+        el = el.parentElement;
+      }
+      console.log('sxTotal:', sxTotal, 'syTotal:', syTotal);
+      // 逆推导：视觉坐标除以缩放因子
+      return {
+        x: x / sxTotal,
+        y: y / syTotal
+      };
+    }
+
+    /**
+     * 通过矩阵逆推导
+     * 输出结果一直有问题，待修改
+     */
+    function globalPointToLocalByMatrix(clientX, clientY, target) {
+      const rect = target.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      let pt = new DOMPoint(x, y); // 全局坐标
+
+      const { transform } = window.getComputedStyle(target);
+      console.log('transform:', transform);
+      const inv = new DOMMatrix(transform).inverse();
+      if (transform && transform !== 'none') {
+        const inv = new DOMMatrix(transform).inverse();
+        pt = pt.matrixTransform(inv);
+      }
+
+      return { x: pt.x, y: pt.y };
+    }
+
+    shape.addEventListener('click', function (e) {
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+      const rect = shape.getBoundingClientRect();
+      const localSimple = simpleGlobalPointToLocal(clientX, clientY, shape);
+
+      info.innerHTML = `
+        <b>点击事件:</b><br>
+        视口坐标 (clientX, clientY): <b>[${clientX}, ${clientY}]</b><br>
+        getBoundingClientRect(): left=${rect.left}, top=${rect.top}, width=${rect.width}, height=${rect.height}<br>
+        <b>简化逆推导:</b> <span style='color:#27ae60'>[${localSimple.x.toFixed(2)}, ${localSimple.y.toFixed(2)}]</span><br>
+        <b>说明:</b> 右下角理论视觉坐标应为 [200, 200]，你可以点击右下角附近测试。<br>
+        <span style='color:#888'>父容器已应用 scale(2)，多级逆推导结果应为原始本地坐标。</span>
+      `;
+    });
+  </script>
+
+  </script>
+</body>
+
+</html>
