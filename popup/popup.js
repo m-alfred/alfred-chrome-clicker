@@ -33,7 +33,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const xInput = document.getElementById('x');
   const yInput = document.getElementById('y');
-  const status = document.getElementById('status');
+  // Toast 显示函数
+  let toastTimer = null;
+  function showToast(message, duration = 1500) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    // 清理旧定时器和动画
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+    toast.classList.remove('hide');
+    toast.textContent = message;
+    toast.classList.add('show');
+    // 保持显示 duration 毫秒
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+      toast.classList.add('hide');
+      // 等待动画结束后再清空内容
+      toastTimer = setTimeout(() => {
+        toast.textContent = '';
+        toast.classList.remove('hide');
+        toastTimer = null;
+      }, 350); // 350ms 与CSS动画一致
+    }, duration);
+  }
   const startTimerBtn = document.getElementById('start-timer-click');
   const stopTimerBtn = document.getElementById('stop-timer-click');
   // 读取已保存的坐标
@@ -57,8 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const y = parseInt(yInput.value, 10) || 0;
     console.log('[popup] 点击保存按钮，保存坐标:', x, y);
     chrome.storage.sync.set({ clickX: x, clickY: y }, () => {
-      status.textContent = '已保存！';
-      setTimeout(() => status.textContent = '', 1200);
+      showToast('已保存！');
     });
   });
 
@@ -112,8 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       xInput.value = msg.x;
       yInput.value = msg.y;
       chrome.storage.sync.set({ clickX: msg.x, clickY: msg.y }, () => {
-        status.textContent = '已通过选点保存！';
-        setTimeout(() => status.textContent = '', 1200);
+        showToast('已通过选点保存！');
       });
     }
 
