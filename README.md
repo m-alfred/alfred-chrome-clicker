@@ -1,4 +1,5 @@
-# 项目说明（alfred-chrome-cliker）
+# alfred-chrome-cliker
+Chrome扩展，用于自动点击屏幕指定坐标。
 
 ## 插件功能
 - 支持自动点击屏幕指定坐标，可自定义点击位置和频率。
