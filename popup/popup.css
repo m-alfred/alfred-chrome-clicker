@@ -1,3 +1,8 @@
+.popup-title {
+  text-align:left;
+  font-weight:bold;
+  margin-bottom:10px;
+}
 .popup-body {
   width: 240px;
   margin: 10px;
