@@ -33,6 +33,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const xInput = document.getElementById('x');
   const yInput = document.getElementById('y');
+  const countInput = document.getElementById('count');
+  const intervalInput = document.getElementById('interval');
+
+  // 初始化时读取 storage 并填充输入框
+  chrome.storage.sync.get(['clickX', 'clickY', 'count', 'interval'], (data) => {
+    console.log('[popup] 读取已保存的坐标:', data);
+    if (typeof data.clickX === 'number') xInput.value = data.clickX;
+    if (typeof data.clickY === 'number') yInput.value = data.clickY;
+    if (typeof data.count === 'number') countInput.value = data.count;
+    if (typeof data.interval === 'number') intervalInput.value = data.interval;
+  });
+
+  // 输入时自动存储到 storage
+  xInput.addEventListener('input', () => {
+    chrome.storage.sync.set({ clickX: parseInt(xInput.value, 10) || 0 });
+  });
+  yInput.addEventListener('input', () => {
+    chrome.storage.sync.set({ clickY: parseInt(yInput.value, 10) || 0 });
+  });
+  countInput.addEventListener('input', () => {
+    chrome.storage.sync.set({ count: parseInt(countInput.value, 10) || 1 });
+  });
+  intervalInput.addEventListener('input', () => {
+    chrome.storage.sync.set({ interval: parseInt(intervalInput.value, 10) || 1000 });
+  });
+
   // Toast 显示函数
   let toastTimer = null;
   function showToast(message, duration = 1500) {
@@ -76,14 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
-  document.getElementById('save').addEventListener('click', () => {
-    const x = parseInt(xInput.value, 10) || 0;
-    const y = parseInt(yInput.value, 10) || 0;
-    console.log('[popup] 点击保存按钮，保存坐标:', x, y);
-    chrome.storage.sync.set({ clickX: x, clickY: y }, () => {
-      showToast('已保存！');
-    });
-  });
 
   // 屏幕选点按钮
   const pickBtn = document.getElementById('pick');
@@ -105,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const x = parseInt(xInput.value, 10) || 0;
       const y = parseInt(yInput.value, 10) || 0;
-      const interval = parseInt(document.getElementById('interval').value, 10) || 1000;
-      const count = parseInt(document.getElementById('count').value, 10) || 10;
+      const interval = parseInt(intervalInput.value, 10) || 1000;
+      const count = parseInt(countInput.value, 10) || 10;
       console.log('[popup] 开始定时点击:', { x, y, interval, count });
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         chrome.tabs.sendMessage(tabs[0].id, {
@@ -153,9 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('inject-script').addEventListener('click', injectScript);
 
-  document.getElementById('refresh-tab').addEventListener('click', function () {
-    reloadTab();
-  });
+  // document.getElementById('refresh-tab').addEventListener('click', function () {
+  //   reloadTab();
+  // });
 
 
   // ====== 统一脚本注入函数 ======
