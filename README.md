@@ -143,9 +143,13 @@ matrix(a, b, c, d, e, f)
 | a  c  e |
 | b  d  f |
 | 0  0  1 |
-````
+```
 a: 水平方向的 scale（+ 旋转分量）
 d: 垂直方向的 scale（+ 旋转分量）
 e: 水平平移（translateX）
 f: 垂直平移（translateY）
 b, c: 旋转/倾斜分量
+
+### Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.
+- 扩展重新加载后，只有新打开或刷新过的页面才会重新注入 content script。
+- 旧页面不会自动注入 content script，导致消息无法送达

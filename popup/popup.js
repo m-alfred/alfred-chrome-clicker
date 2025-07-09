@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const yInput = document.getElementById('y');
   const countInput = document.getElementById('count');
   const intervalInput = document.getElementById('interval');
+  const remainCountDiv = document.getElementById('remain-count');
+  let remainCount = 0;
 
   // 初始化时读取 storage 并填充输入框
   chrome.storage.sync.get(['clickX', 'clickY', 'count', 'interval'], (data) => {
@@ -84,8 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 350); // 350ms 与CSS动画一致
     }, duration);
   }
-  const startTimerBtn = document.getElementById('start-timer-click');
-  const stopTimerBtn = document.getElementById('stop-timer-click');
+  const timerToggleBtn = document.getElementById('timer-toggle-btn');
+  let timerRunning = false;
   // 读取已保存的坐标
   // 向background请求最新选点坐标
   chrome.runtime.sendMessage({ action: 'get_last_point' }, (res) => {
@@ -110,38 +112,48 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('[popup] 点击屏幕选点按钮');
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         console.log('[popup] 发送pick_point消息到tab:', tabs[0].id);
-        chrome.tabs.sendMessage(tabs[0].id, { action: 'pick_point' });
-      });
-      // 自动关闭popup窗口，提升用户体验
-      window.close();
-    });
-  }
-
-  if (startTimerBtn) {
-    startTimerBtn.addEventListener('click', () => {
-      stopTimerBtn.style.display = '';
-
-      const x = parseInt(xInput.value, 10) || 0;
-      const y = parseInt(yInput.value, 10) || 0;
-      const interval = parseInt(intervalInput.value, 10) || 1000;
-      const count = parseInt(countInput.value, 10) || 10;
-      console.log('[popup] 开始定时点击:', { x, y, interval, count });
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: 'timer_click',
-          x, y, interval, count
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'pick_point' }, function () {
+          // 等消息真正发出后再关闭 popup
+          // 自动关闭popup窗口，提升用户体验
+          window.close();
         });
       });
     });
   }
 
-  if (stopTimerBtn) {
-    stopTimerBtn.addEventListener('click', function () {
-      // 通知 content.js 停止自动点击
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: 'stop_timer_click' });
-      });
-      stopTimerBtn.style.display = 'none';
+  if (timerToggleBtn) {
+    timerToggleBtn.addEventListener('click', () => {
+      if (!timerRunning) {
+        // 开始自动点击
+        const x = parseInt(xInput.value, 10) || 0;
+        const y = parseInt(yInput.value, 10) || 0;
+        const interval = parseInt(intervalInput.value, 10) || 1000;
+        const count = parseInt(countInput.value, 10) || 10;
+        console.log('[popup] 开始定时点击:', { x, y, interval, count });
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'timer_click',
+            x, y, interval, count
+          });
+          // 开始自动点击时初始化剩余点击次数
+          remainCount = count;
+          if (remainCountDiv) remainCountDiv.textContent = `剩余点击次数：${remainCount}`;
+          // 之后的剩余次数展示完全由 content.js 消息同步
+        });
+        timerToggleBtn.textContent = '停止自动点击';
+        timerToggleBtn.classList.add('btn-gray');
+        timerRunning = true;
+      } else {
+        // 停止自动点击
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: 'stop_timer_click' });
+        });
+        timerToggleBtn.textContent = '自动点击';
+        timerToggleBtn.classList.remove('btn-gray');
+        timerRunning = false;
+        // 自动点击结束时重置剩余点击次数
+        remainCountDiv.textContent = '剩余点击次数：-';
+      }
     });
   }
 
@@ -157,9 +169,22 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    if (msg.action === 'timer_click_remain') {
+      if (remainCountDiv) remainCountDiv.textContent = `剩余点击次数：${msg.remain}`;
+    }
+
     if (msg.action === 'timer_click_done') {
       console.log('[popup] 收到timer_click_done消息');
-      stopTimerBtn.style.display = 'none';
+      // 停止后重置剩余点击次数
+      if (remainCountDiv) remainCountDiv.textContent = '剩余点击次数：-';
+      // 按钮状态重置
+      if (typeof timerRunning !== 'undefined') {
+        timerRunning = false;
+        if (timerToggleBtn) {
+          timerToggleBtn.textContent = '自动点击';
+          timerToggleBtn.classList.remove('btn-gray');
+        }
+      }
     }
   });
 

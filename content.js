@@ -302,6 +302,8 @@
       console.log(`[content] timer_click 第${i + 1}次: (${x},${y})`);
       simulateViewportClick(x, y);
       i++;
+      // 每次点击后同步剩余次数到popup
+      chrome.runtime.sendMessage({ action: 'timer_click_remain', remain: count - i });
       timerClickTimerId = setTimeout(doClick, interval);
     }
     doClick();
