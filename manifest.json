@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "自动点击器 Auto Clicker",
+  "name": "Alfred Clicker自动点击器",
   "version": "1.0",
   "description": "自动点击屏幕指定坐标，可自定义位置。",
   "permissions": [
@@ -21,7 +21,7 @@
       "16": "icons/favicon-16.png",
       "32": "icons/favicon-32.png",
       "48": "icons/favicon-48.png",
-      "192": "icons/favicon-192.png"
+      "128": "icons/favicon-128.png"
     }
   },
   "web_accessible_resources": [
