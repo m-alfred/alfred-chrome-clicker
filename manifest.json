@@ -5,9 +5,7 @@
   "description": "自动点击屏幕指定坐标，可自定义位置。",
   "permissions": [
     "activeTab",
-    "scripting",
-    "storage",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"

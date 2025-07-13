@@ -168,3 +168,7 @@ b, c: 旋转/倾斜分量
 ### Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.
 - 扩展重新加载后，只有新打开或刷新过的页面才会重新注入 content script。
 - 旧页面不会自动注入 content script，导致消息无法送达
+
+###  permissions
+#### tabs
+它会授予扩展程序对 tabs.Tab 实例上的四个敏感属性（url、pendingUrl、title 和 favIconUrl）调用 tabs.query() 的权限。
