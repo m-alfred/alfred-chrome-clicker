@@ -154,20 +154,23 @@
           ripple.style.marginLeft = -(baseSize / 2) + 'px';
           ripple.style.marginTop = -(baseSize / 2) + 'px';
           ripple.style.borderRadius = '50%';
-          // ripple.style.border = '48px solid #d85040';
           ripple.style.background = '#d85040';
           ripple.style.zIndex = 9999999;
           ripple.style.pointerEvents = 'none';
           ripple.style.boxSizing = 'border-box';
-          // ripple.style.opacity = '0.65';
           ripple.style.transform = 'scale(0.7)';
+          ripple.style.opacity = '1';
           ripple.style.transition = `transform ${rippleDurationMs}ms cubic-bezier(0.38,0.01,0,1), opacity ${rippleDurationMs}ms`;
           document.body.appendChild(ripple);
           setTimeout(() => {
+            console.log('[simulateViewportClick] 动画开始');
             ripple.style.transform = 'scale(2)';
             ripple.style.opacity = '0';
           }, 10);
-          setTimeout(() => ripple.remove(), rippleDurationMs + 100);
+          // transitionend事件移除元素，防止提前丢帧
+          ripple.addEventListener('transitionend', () => {
+            if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
+          }, { once: true });
         }, i * rippleInterval);
       }
     })();
