@@ -107,6 +107,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 屏幕选点按钮
   const pickBtn = document.getElementById('pick');
+  const showCoordBtn = document.getElementById('show-coord-btn');
+  if (showCoordBtn) {
+    showCoordBtn.addEventListener('click', () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        const x = parseInt(xInput.value, 10) || 0;
+        const y = parseInt(yInput.value, 10) || 0;
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'show_current_coord', x, y });
+      });
+    });
+  }
+
   if (pickBtn) {
     pickBtn.addEventListener('click', () => {
       console.log('[popup] 点击屏幕选点按钮');
@@ -115,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.tabs.sendMessage(tabs[0].id, { action: 'pick_point' }, function () {
           // 等消息真正发出后再关闭 popup
           // 自动关闭popup窗口，提升用户体验
-          window.close();
+          // window.close();
         });
       });
     });

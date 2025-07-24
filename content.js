@@ -268,6 +268,51 @@
   }
   // 监听popup发来的选点请求
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.action === 'show_current_coord') {
+      // 使用popup传递的x/y坐标
+      let lastX = typeof msg.x === 'number' ? msg.x : 0;
+      let lastY = typeof msg.y === 'number' ? msg.y : 0;
+      // 创建浮动提示和高亮点
+      const marker = document.createElement('div');
+      marker.style.position = 'fixed';
+      marker.style.left = lastX + 'px';
+      marker.style.top = lastY + 'px';
+      marker.style.width = '16px';
+      marker.style.height = '16px';
+      marker.style.marginLeft = '-8px';
+      marker.style.marginTop = '-8px';
+      marker.style.background = '#266eee';
+      marker.style.border = '2px solid #fff';
+      marker.style.borderRadius = '50%';
+      marker.style.boxShadow = '0 0 8px #09f';
+      marker.style.zIndex = 9999999;
+      marker.style.pointerEvents = 'none';
+      marker.style.transition = 'opacity 0.3s';
+      document.body.appendChild(marker);
+      // 坐标文本提示
+      const coordTip = document.createElement('div');
+      coordTip.textContent = `X: ${lastX}, Y: ${lastY}`;
+      coordTip.style.position = 'fixed';
+      coordTip.style.left = (lastX + 20) + 'px';
+      coordTip.style.top = (lastY - 10) + 'px';
+      coordTip.style.background = 'rgba(0,0,0,0.8)';
+      coordTip.style.color = '#fff';
+      coordTip.style.padding = '5px 12px';
+      coordTip.style.borderRadius = '5px';
+      coordTip.style.fontSize = '14px';
+      coordTip.style.zIndex = 9999999;
+      coordTip.style.pointerEvents = 'none';
+      document.body.appendChild(coordTip);
+      setTimeout(() => {
+        marker.style.opacity = '0';
+        coordTip.style.opacity = '0';
+        setTimeout(() => {
+          marker.remove();
+          coordTip.remove();
+        }, 350);
+      }, 3000);
+    }
+
     console.log('[content] 收到消息:', msg);
     if (msg.action === 'pick_point') {
       console.log('[content] 激活选点模式');
