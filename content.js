@@ -327,6 +327,31 @@
       marker.style.pointerEvents = 'none';
       marker.style.transition = 'opacity 0.3s';
       document.body.appendChild(marker);
+      // ====== 动画水波效果 ======
+      const ripple = document.createElement('div');
+      ripple.style.position = 'fixed';
+      ripple.style.left = lastX + 'px';
+      ripple.style.top = lastY + 'px';
+      ripple.style.width = '36px';
+      ripple.style.height = '36px';
+      ripple.style.marginLeft = '-18px';
+      ripple.style.marginTop = '-18px';
+      ripple.style.border = '2px solid #266eee';
+      ripple.style.borderRadius = '50%';
+      ripple.style.zIndex = 9999998;
+      ripple.style.pointerEvents = 'none';
+      ripple.style.opacity = '0.7';
+      ripple.style.transform = 'scale(0.5)';
+      ripple.style.transition = 'opacity 0.7s, transform 0.7s';
+      document.body.appendChild(ripple);
+      setTimeout(() => {
+        ripple.style.opacity = '0';
+        ripple.style.transform = 'scale(2.2)';
+      }, 10);
+      setTimeout(() => {
+        ripple.remove();
+      }, 700);
+
       // 坐标文本提示
       const coordTip = document.createElement('div');
       coordTip.textContent = `X: ${lastX}, Y: ${lastY}`;
