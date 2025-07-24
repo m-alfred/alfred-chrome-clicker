@@ -303,6 +303,10 @@
   // 监听popup发来的选点请求
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.action === 'show_current_coord') {
+      if (window.self !== window.top) {
+        console.log('[content] 非顶层frame，忽略show_current_coord请求');
+        return;
+      }
       // 使用popup传递的x/y坐标
       let lastX = typeof msg.x === 'number' ? msg.x : 0;
       let lastY = typeof msg.y === 'number' ? msg.y : 0;

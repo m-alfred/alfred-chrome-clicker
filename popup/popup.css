@@ -104,6 +104,12 @@
   margin-top: 8px;
 }
 
+.tips {
+  color: #d85040;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
 .inject-toggle {
   cursor: pointer;
   user-select: none;

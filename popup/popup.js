@@ -88,6 +88,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   const timerToggleBtn = document.getElementById('timer-toggle-btn');
   let timerRunning = false;
+  // 启动时从storage读取自动点击状态
+  chrome.storage.sync.get(['timerRunning'], (data) => {
+    if (typeof data.timerRunning === 'boolean') {
+      timerRunning = data.timerRunning;
+      if (timerToggleBtn) {
+        if (timerRunning) {
+          timerToggleBtn.textContent = '停止自动点击';
+          timerToggleBtn.classList.add('btn-gray');
+        } else {
+          timerToggleBtn.textContent = '自动点击';
+          timerToggleBtn.classList.remove('btn-gray');
+        }
+      }
+    }
+  });
   // 读取已保存的坐标
   // 向background请求最新选点坐标
   chrome.runtime.sendMessage({ action: 'get_last_point' }, (res) => {
@@ -155,6 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timerToggleBtn.textContent = '停止自动点击';
         timerToggleBtn.classList.add('btn-gray');
         timerRunning = true;
+        chrome.storage.sync.set({ timerRunning: true });
       } else {
         // 停止自动点击
         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -163,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timerToggleBtn.textContent = '自动点击';
         timerToggleBtn.classList.remove('btn-gray');
         timerRunning = false;
+        chrome.storage.sync.set({ timerRunning: false });
         // 自动点击结束时重置剩余点击次数
         remainCountDiv.textContent = '剩余点击次数：-';
       }
@@ -192,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 按钮状态重置
       if (typeof timerRunning !== 'undefined') {
         timerRunning = false;
+        chrome.storage.sync.set({ timerRunning: false });
         if (timerToggleBtn) {
           timerToggleBtn.textContent = '自动点击';
           timerToggleBtn.classList.remove('btn-gray');
