@@ -169,6 +169,28 @@ b, c: 旋转/倾斜分量
 - 扩展重新加载后，只有新打开或刷新过的页面才会重新注入 content script。
 - 旧页面不会自动注入 content script，导致消息无法送达
 
+### Unchecked runtime.lastError: The message port closed before a response was received.
+这个报错，通常是因为 popup 向 content script 发送消息时，callback 期望有响应，但 content script 没有调用 sendResponse，或者 callback 没有处理异常。
+要么去掉callback
+```
+chrome.tabs.sendMessage(tabId, { action: 'pick_point' });
+```
+要么content.js 里要加一行 sendResponse()，比如：
+```
+if (msg.action === 'pick_point') {
+  enablePickPointMode();
+  sendResponse({ ok: true });
+}
+```
+
 ###  permissions
-#### tabs
+#### tabs和currentTab权限
 它会授予扩展程序对 tabs.Tab 实例上的四个敏感属性（url、pendingUrl、title 和 favIconUrl）调用 tabs.query() 的权限。
+
+chrome.tabs.query({active:true}) 获取当前活动标签页的 tabId，这其实用 "activeTab" 就够了，不需要 "tabs"。
+
+只有以下几种场景才“必须”用 "tabs"：
+
+需要访问所有标签页的信息（比如遍历所有 tab、获取/修改任意 tab 的 url/title、批量操作标签页等）。
+需要操作非当前激活标签页（比如后台批量关闭、移动、刷新等）。
+需要访问 chrome.tabs.* API 的敏感属性（如 url、title、favIconUrl）且不只是当前活动页

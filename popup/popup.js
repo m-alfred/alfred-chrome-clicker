@@ -124,9 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         console.log('[popup] 发送pick_point消息到tab:', tabs[0].id);
         chrome.tabs.sendMessage(tabs[0].id, { action: 'pick_point' }, function () {
+          console.log('[popup] 关闭popup窗口');
           // 等消息真正发出后再关闭 popup
           // 自动关闭popup窗口，提升用户体验
-          // window.close();
+          window.close();
         });
       });
     });

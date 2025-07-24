@@ -137,6 +137,40 @@
   }
 
   function _simulateViewportClickOnThisWindow(x, y) {
+    // 点击手势动画
+    (function showRippleGestures() {
+      const rippleCount = 1;
+      const rippleInterval = 120; // ms
+      const baseSize = 36;
+      const rippleDurationMs = 700; // 动画时长(ms)
+      for (let i = 0; i < rippleCount; i++) {
+        setTimeout(() => {
+          const ripple = document.createElement('div');
+          ripple.style.position = 'fixed';
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+          ripple.style.width = baseSize + 'px';
+          ripple.style.height = baseSize + 'px';
+          ripple.style.marginLeft = -(baseSize / 2) + 'px';
+          ripple.style.marginTop = -(baseSize / 2) + 'px';
+          ripple.style.borderRadius = '50%';
+          // ripple.style.border = '48px solid #d85040';
+          ripple.style.background = '#d85040';
+          ripple.style.zIndex = 9999999;
+          ripple.style.pointerEvents = 'none';
+          ripple.style.boxSizing = 'border-box';
+          // ripple.style.opacity = '0.65';
+          ripple.style.transform = 'scale(0.7)';
+          ripple.style.transition = `transform ${rippleDurationMs}ms cubic-bezier(0.38,0.01,0,1), opacity ${rippleDurationMs}ms`;
+          document.body.appendChild(ripple);
+          setTimeout(() => {
+            ripple.style.transform = 'scale(2)';
+            ripple.style.opacity = '0';
+          }, 10);
+          setTimeout(() => ripple.remove(), rippleDurationMs + 100);
+        }, i * rippleInterval);
+      }
+    })();
     const el = document.elementFromPoint(x, y);
     if (!el) {
       console.log('[simulateViewportClick] 没找到目标元素');
@@ -317,6 +351,7 @@
     if (msg.action === 'pick_point') {
       console.log('[content] 激活选点模式');
       enablePickPointMode();
+      sendResponse({ ok: true });
     }
     if (msg.action === 'timer_click') {
       console.log('[content] 收到timer_click:', msg);
