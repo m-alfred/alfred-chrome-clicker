@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Alfred Clicker自动点击器",
-  "version": "1.1",
+  "version": "1.1.1",
   "description": "自动点击屏幕指定坐标，可自定义位置。",
   "permissions": [
     "activeTab",
