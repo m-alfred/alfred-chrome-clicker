@@ -198,7 +198,3 @@
   opacity: 0;
   animation: toast-fade-out 0.35s;
 }
-
-  visibility: visible;
-  opacity: 1;
-}
